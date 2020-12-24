@@ -1,0 +1,9 @@
+{
+    "MYSQL_IP":"hita.store",
+    "MYSQL_USERNAME":"user1",
+    "MYSQL_PASSWORD":"123456",
+    "MYSQL_PORT":"3306",
+	"MYSQL_DBNAME":"hita",
+
+    "PORT":"39999"
+}
