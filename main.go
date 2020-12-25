@@ -7,6 +7,7 @@ import (
 	"hita/controller"
 	"hita/lib/logger"
 	"hita/lib/mysql"
+	"hita/repository"
 	"net/http"
 	"os"
 	"os/signal"
@@ -28,6 +29,8 @@ func init() {
 	err = mysql.InitDB()
 	if err != nil {
 		logger.Fatalln("InitDB failed:", err)
+	} else {
+		mysql.DB.AutoMigrate(&repository.User{})
 	}
 
 	logger.Println("init db success")
@@ -35,7 +38,7 @@ func init() {
 	logger.Println("process init success")
 }
 
-func  main()  {
+func main() {
 	//创建一个gin框架的指针
 	router := gin.New()
 
@@ -45,14 +48,12 @@ func  main()  {
 	userRoutes := router.Group("/user")
 	{
 		//绑定向/user_center/post的POST请求
-		userRoutes.POST("/sign_up",controller.SignUp)
+		userRoutes.POST("/sign_up", controller.SignUp)
 	}
-
-
 
 	//路由在指定端口Run起来（异步）
 	go func() {
-		router.Run(":"+config.PORT)
+		router.Run(":" + config.PORT)
 	}()
 
 	// 等待中断信号来优雅地关闭服务器，为关闭服务器操作设置一个5秒的超时
@@ -61,8 +62,8 @@ func  main()  {
 	// kill -2 发送 syscall.SIGINT 信号，我们常用的Ctrl+C就是触发系统SIGINT信号
 	// kill -9 发送 syscall.SIGKILL 信号，但是不能被捕获，所以不需要添加它
 	// signal.Notify把收到的 syscall.SIGINT或syscall.SIGTERM 信号转发给quit
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)  // 此处不会阻塞
-	<-quit  // 阻塞在此，当接收到上述两种信号时才会往下执行
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM) // 此处不会阻塞
+	<-quit                                               // 阻塞在此，当接收到上述两种信号时才会往下执行
 	logger.Println("Shutdown Server ...")
 	// 创建一个5秒超时的context
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

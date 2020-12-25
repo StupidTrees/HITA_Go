@@ -5,15 +5,17 @@ import (
 	orm "hita/lib/mysql"
 	"time"
 )
-//定义person类型结构
+
 type User struct {
-	Id        int64    `json:"id" gorm:"PRIMARY_KEY"`
-	UserName string `json:"username" gorm:"column:username; unique_index:username_idx; not null"`
-	Password  string `json:"password" gorm:"column:password; not null"`
-	Nickname  string `json:"nickname" gorm:"column:nickname"`
-	Gender  string `json:"gender" gorm:"type:enum('OTHER','MALE','FEMALE');default:OTHER"`
-	CreateTime time.Time `json:"create_time" gorm:"column:createtime;"`
-	UpdateTime time.Time `json:"update_time" gorm:"column:updatetime;"`
+	Id         int64     `json:"id" gorm:"PRIMARY_KEY"`
+	UserName   string    `json:"username" gorm:"column:username; unique_index:username_idx; not null"`
+	Password   string    `json:"password" gorm:"column:password; not null"`
+	Nickname   string    `json:"nickname" gorm:"column:nickname"`
+	Gender     string    `json:"gender" gorm:"type:enum('OTHER','MALE','FEMALE');default:OTHER"`
+	StudentId  string    `json:"student_id"`
+	School     string    `json:"school"`
+	CreateTime time.Time `json:"create_time" gorm:"column:createtime;default:null"`
+	UpdateTime time.Time `json:"update_time" gorm:"column:updatetime;default:null"`
 }
 
 func (User) TableName() string {

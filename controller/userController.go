@@ -7,8 +7,7 @@ import (
 	"hita/service"
 )
 
-
-func SignUp(c *gin.Context){
+func SignUp(c *gin.Context) {
 	var req service.ReqSignUp
 	var token int64
 	resultCode := 0
@@ -19,23 +18,23 @@ func SignUp(c *gin.Context){
 		message = "request param error!:" + err.Error()
 		logger.Errorln(message)
 	} else {
-		if req.Gender != "MALE"&& req.Gender != "FEMALE" && req.Gender != "OTHER" {
+		if req.Gender != "MALE" && req.Gender != "FEMALE" && req.Gender != "OTHER" {
 			resultCode = CodeWrongParam
 			message = "wrong param！"
-		}else{
-			token,err = req.SignUp()
-			if err!=nil {
+		} else {
+			token, err = req.SignUp()
+			if err != nil {
 				resultCode = CodeUserExists
 				message = "user already exists!"
+			} else {
+				message = "success!"
 			}
 		}
 	}
 	//响应给客户端
-	c.JSON(200,gin.H{
+	c.JSON(200, gin.H{
 		"result_code": resultCode,
 		"error_msg":   message,
-		"data": token,
+		"data":        token,
 	})
 }
-
-
