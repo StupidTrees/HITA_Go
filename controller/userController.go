@@ -9,7 +9,8 @@ import (
 
 func SignUp(c *gin.Context) {
 	var req service.ReqSignUp
-	var token int64
+	var token string
+	var id int64
 	resultCode := 0
 	message := ""
 	err := c.ShouldBind(&req)
@@ -22,7 +23,7 @@ func SignUp(c *gin.Context) {
 			resultCode = CodeWrongParam
 			message = "wrong param！"
 		} else {
-			token, err = req.SignUp()
+			id, token, err = req.SignUp()
 			if err != nil {
 				resultCode = CodeUserExists
 				message = "user already exists!"
@@ -35,6 +36,9 @@ func SignUp(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"result_code": resultCode,
 		"error_msg":   message,
-		"data":        token,
+		"userId": gin.H{
+			"token":  token,
+			"userId": id,
+		},
 	})
 }

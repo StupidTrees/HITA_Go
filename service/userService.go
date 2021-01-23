@@ -1,7 +1,9 @@
 package service
 
 import (
+	"hita/lib/verify"
 	repo "hita/repository"
+	"strconv"
 )
 
 type ReqSignUp struct {
@@ -11,12 +13,16 @@ type ReqSignUp struct {
 	Gender   string `form:"gender" json:"gender" `
 }
 
-func (req *ReqSignUp) SignUp() (id int64, err error) {
+func (req *ReqSignUp) SignUp() (id int64, token string, err error) {
 	var user = repo.User{
 		UserName: req.Username,
 		Nickname: req.Nickname,
 		Gender:   req.Gender,
 		Password: req.Password,
 	}
-	return user.AddUser()
+	id, err = user.AddUser()
+	if err == nil {
+		token, err = verify.SignToken(strconv.FormatInt(id, 10))
+	}
+	return id, token, err
 }

@@ -1,6 +1,5 @@
 package config
 
-
 import (
 	"errors"
 	jsoniter "github.com/json-iterator/go"
@@ -10,8 +9,6 @@ import (
 	"os"
 )
 
-
-
 var MysqlIp string
 var MysqlUsername string
 var MysqlPassword string
@@ -19,37 +16,33 @@ var MysqlPort string
 var MysqlDbname string
 var PORT string
 
-
-
 type ClientInfo struct {
 	ClientSecret string
-	ClientToken string
-	TokenType string
+	ClientToken  string
+	TokenType    string
 }
 
-
-func init(){
+func init() {
 }
-
 
 //从文件中读取配置信息
-func loadFromConfigFile(configFilePath string)error{
+func loadFromConfigFile(configFilePath string) error {
 
-	file,err:= os.Open(configFilePath)
+	file, err := os.Open(configFilePath)
 
-	if err!= nil{
+	if err != nil {
 		log.Println(err)
-         return err
+		return err
 	}
 
-	data,err := ioutil.ReadAll(file)
+	data, err := ioutil.ReadAll(file)
 
-	if nil != err{
+	if nil != err {
 		return err
 	}
 
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
- 
+
 	var jsonConfig jsoniter.Any = json.Get(data)
 
 	MysqlIp = jsonConfig.Get("MYSQL_IP").ToString()
@@ -59,18 +52,18 @@ func loadFromConfigFile(configFilePath string)error{
 	MysqlPort = jsonConfig.Get("MYSQL_PORT").ToString()
 	PORT = jsonConfig.Get("PORT").ToString()
 
-	if MysqlIp == "" || MysqlUsername == "" || MysqlPassword == "" || MysqlPort == "" || PORT == "" || MysqlDbname == ""{
+	if MysqlIp == "" || MysqlUsername == "" || MysqlPassword == "" || MysqlPort == "" || PORT == "" || MysqlDbname == "" {
 		return errors.New("config is error")
 	}
 
 	return nil
 }
 
-func LoadConfig(configFile string) error{
+func LoadConfig(configFile string) error {
 
-	err:= loadFromConfigFile(configFile)
-	if nil != err{
-		logger.Println("Failed to load config,Error:"+err.Error())
+	err := loadFromConfigFile(configFile)
+	if nil != err {
+		logger.Println("Failed to load config,Error:" + err.Error())
 		return err
 	}
 

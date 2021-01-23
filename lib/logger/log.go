@@ -1,4 +1,5 @@
 package logger
+
 import (
 	"fmt"
 	"log"
@@ -6,15 +7,18 @@ import (
 	"path/filepath"
 	"runtime"
 )
+
 type Level int
+
 var (
-	F *os.File
-	DefaultPrefix = ""
+	F                  *os.File
+	DefaultPrefix      = ""
 	DefaultCallerDepth = 2
-	logger *log.Logger
-	logPrefix = ""
-	levelFlags = []string{"DEBUG", "INFO", "WARN", "ERROR", "FATAL"}
+	logger             *log.Logger
+	logPrefix          = ""
+	levelFlags         = []string{"DEBUG", "INFO", "WARN", "ERROR", "FATAL"}
 )
+
 const (
 	DEBUG Level = iota
 	INFO
@@ -22,6 +26,7 @@ const (
 	ERROR
 	FATAL
 )
+
 func init() {
 	filePath := getLogFileFullPath()
 	F = openLogFile(filePath)
@@ -39,9 +44,9 @@ func Println(v ...interface{}) {
 	setPrefix(INFO)
 	logger.Println(v)
 }
-func Printf(format string,v ...interface{}) {
+func Printf(format string, v ...interface{}) {
 	setPrefix(INFO)
-	logger.Printf(format,v ...)
+	logger.Printf(format, v...)
 }
 func Warnln(v ...interface{}) {
 	setPrefix(WARNING)

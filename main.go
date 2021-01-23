@@ -7,6 +7,7 @@ import (
 	"hita/controller"
 	"hita/lib/logger"
 	"hita/lib/mysql"
+	"hita/middleware"
 	"hita/repository"
 	"net/http"
 	"os"
@@ -47,9 +48,9 @@ func main() {
 
 	userRoutes := router.Group("/user")
 	{
-		//绑定向/user_center/post的POST请求
 		userRoutes.POST("/sign_up", controller.SignUp)
 	}
+	router.Use(middleware.JWTAuthMiddleware)
 
 	//路由在指定端口Run起来（异步）
 	go func() {
