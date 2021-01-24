@@ -14,6 +14,8 @@ var MysqlUsername string
 var MysqlPassword string
 var MysqlPort string
 var MysqlDbname string
+var ServerPrivateKey string
+var ServerPublicKey string
 var PORT string
 
 type ClientInfo struct {
@@ -51,6 +53,8 @@ func loadFromConfigFile(configFilePath string) error {
 	MysqlDbname = jsonConfig.Get("MYSQL_DBNAME").ToString()
 	MysqlPort = jsonConfig.Get("MYSQL_PORT").ToString()
 	PORT = jsonConfig.Get("PORT").ToString()
+	ServerPublicKey = jsonConfig.Get("SERVER_PUBLIC_KEY").ToString()
+	ServerPrivateKey = jsonConfig.Get("SERVER_PRIVATE_KEY").ToString()
 
 	if MysqlIp == "" || MysqlUsername == "" || MysqlPassword == "" || MysqlPort == "" || PORT == "" || MysqlDbname == "" {
 		return errors.New("config is error")

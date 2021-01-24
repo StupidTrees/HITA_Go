@@ -55,7 +55,8 @@ func main() {
 
 	//路由在指定端口Run起来（异步）
 	go func() {
-		router.Run(":" + config.PORT)
+		err := router.Run(":" + config.PORT)
+		println(err)
 	}()
 
 	// 等待中断信号来优雅地关闭服务器，为关闭服务器操作设置一个5秒的超时

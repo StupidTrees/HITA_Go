@@ -6,6 +6,6 @@ import (
 
 type StdResp struct {
 	Code    int    `json:"code"`
-	Message string `json:"message"`
+	Message string `json:"msg"`
 	Data    gin.H  `json:"data"`
 }

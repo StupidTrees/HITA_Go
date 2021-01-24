@@ -15,6 +15,8 @@ type User struct {
 	Gender     string    `json:"gender" gorm:"type:enum('OTHER','MALE','FEMALE');default:OTHER"`
 	StudentId  string    `json:"student_id"`
 	School     string    `json:"school"`
+	PublicKey  string    `gorm:"column:public_key;not null"`
+	PrivateKey string    `gorm:"column:private_key;not null"`
 	CreateTime time.Time `json:"create_time" gorm:"column:createtime;default:null"`
 	UpdateTime time.Time `json:"update_time" gorm:"column:updatetime;default:null"`
 }
@@ -24,7 +26,6 @@ func (User) TableName() string {
 }
 
 func (user *User) AddUser() (id int64, err error) {
-
 	result := orm.DB.Create(user)
 	id = user.Id
 	if result.Error != nil {
@@ -36,7 +37,7 @@ func (user *User) AddUser() (id int64, err error) {
 }
 
 func (user *User) FindUser() error {
-	if orm.DB.Where("username = ?", user.UserName).Find(user).RecordNotFound() {
+	if orm.DB.Where("username = ?", user.UserName).First(user).RecordNotFound() {
 		return errors.New("user not exist")
 	}
 	return nil

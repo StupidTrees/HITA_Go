@@ -13,7 +13,7 @@ var DB *gorm.DB
 //初始化方法
 func InitDB() error {
 	var err error
-	dbDriver := config.MysqlUsername + ":" + config.MysqlPassword + "@tcp(" + config.MysqlIp + ":" + config.MysqlPort + ")/" + config.MysqlDbname + "?charset=utf8"
+	dbDriver := config.MysqlUsername + ":" + config.MysqlPassword + "@tcp(" + config.MysqlIp + ":" + config.MysqlPort + ")/" + config.MysqlDbname + "?charset=utf8&parseTime=true"
 	DB, err = gorm.Open("mysql", dbDriver)
 	if err != nil {
 		log.Fatal(err.Error())
