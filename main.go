@@ -5,10 +5,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"hita/config"
 	"hita/controller"
-	"hita/lib/logger"
-	"hita/lib/mysql"
 	"hita/middleware"
 	"hita/repository"
+	"hita/utils/logger"
+	"hita/utils/mysql"
 	"net/http"
 	"os"
 	"os/signal"
@@ -49,6 +49,7 @@ func main() {
 	userRoutes := router.Group("/user")
 	{
 		userRoutes.POST("/sign_up", controller.SignUp)
+		userRoutes.POST("/log_in", controller.LogIn)
 	}
 	router.Use(middleware.JWTAuthMiddleware)
 

@@ -3,7 +3,7 @@ package config
 import (
 	"errors"
 	jsoniter "github.com/json-iterator/go"
-	"hita/lib/logger"
+	"hita/utils/logger"
 	"io/ioutil"
 	"log"
 	"os"

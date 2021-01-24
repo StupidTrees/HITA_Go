@@ -1,8 +1,9 @@
 package repository
 
 import (
-	"hita/lib/logger"
-	orm "hita/lib/mysql"
+	"errors"
+	"hita/utils/logger"
+	orm "hita/utils/mysql"
 	"time"
 )
 
@@ -32,7 +33,13 @@ func (user *User) AddUser() (id int64, err error) {
 		return
 	}
 	return
+}
 
+func (user *User) FindUser() error {
+	if orm.DB.Where("username = ?", user.UserName).Find(user).RecordNotFound() {
+		return errors.New("user not exist")
+	}
+	return nil
 }
 
 //func (p *Person) GetPersons() (persons []Person, err error) {

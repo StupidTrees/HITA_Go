@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"github.com/gin-gonic/gin"
-	"hita/lib/verify"
+	"hita/utils/verify"
 	"net/http"
 	"strings"
 )
