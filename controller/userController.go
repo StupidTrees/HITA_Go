@@ -12,7 +12,6 @@ func SignUp(c *gin.Context) {
 	var req service.ReqSignUp
 	var token string
 	var publicKey string
-	var id int64
 	resultCode := 0
 	message := ""
 	err := c.ShouldBind(&req)
@@ -25,7 +24,7 @@ func SignUp(c *gin.Context) {
 			resultCode = api.CodeWrongParam
 			message = "wrong param！"
 		} else {
-			id, token, publicKey, resultCode, err = req.SignUp()
+			token, publicKey, resultCode, err = req.SignUp()
 			if err != nil {
 				message = err.Error()
 			} else {
@@ -40,7 +39,6 @@ func SignUp(c *gin.Context) {
 		Message: message,
 		Data: gin.H{
 			"token":      token,
-			"user_id":    id,
 			"public_key": publicKey,
 		},
 	})
@@ -49,6 +47,7 @@ func SignUp(c *gin.Context) {
 func LogIn(c *gin.Context) {
 	var req service.ReqLogIn
 	var token string
+	var publicKey string
 	resultCode := 0
 	message := ""
 	err := c.ShouldBind(&req)
@@ -60,7 +59,7 @@ func LogIn(c *gin.Context) {
 			resultCode = api.CodeWrongParam
 			message = "username shouldn't be empty!"
 		} else {
-			token, resultCode, err = req.LogIn()
+			token, publicKey, resultCode, err = req.LogIn()
 			if err == nil {
 				resultCode = api.CodeSuccess
 				message = "success!"
@@ -72,7 +71,8 @@ func LogIn(c *gin.Context) {
 	//响应给客户端
 	c.JSON(200, api.StdResp{
 		Code: resultCode, Message: message, Data: gin.H{
-			"token": token,
+			"token":      token,
+			"public_key": publicKey,
 		},
 	})
 }

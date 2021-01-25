@@ -21,7 +21,7 @@ type ReqLogIn struct {
 	Password string `form:"password" json:"password"`
 }
 
-func (req *ReqSignUp) SignUp() (id int64, token string, publicKey string, code int, err error) {
+func (req *ReqSignUp) SignUp() (token string, publicKey string, code int, err error) {
 	var user = repo.User{
 		UserName: req.Username,
 		Nickname: req.Nickname,
@@ -37,9 +37,9 @@ func (req *ReqSignUp) SignUp() (id int64, token string, publicKey string, code i
 	}
 	//密码使用用户私钥加密存储
 	user.Password = security.EncryptWithPrivateKey(user.Password, user.PrivateKey)
-	id, err = user.AddUser()
+	_, err = user.AddUser()
 	if err == nil {
-		token, err = verify.SignToken(strconv.FormatInt(id, 10))
+		token, err = verify.SignToken(strconv.FormatInt(user.Id, 10))
 		publicKey = user.PublicKey
 	} else {
 		code = api.CodeUserExists
@@ -48,7 +48,7 @@ func (req *ReqSignUp) SignUp() (id int64, token string, publicKey string, code i
 	return
 }
 
-func (req *ReqLogIn) LogIn() (token string, code int, err error) {
+func (req *ReqLogIn) LogIn() (token string, publicKey string, code int, err error) {
 	var user = repo.User{
 		UserName: req.Username,
 	}
@@ -56,6 +56,9 @@ func (req *ReqLogIn) LogIn() (token string, code int, err error) {
 		realPassword := security.DecryptWithPublicKey(user.Password, user.PublicKey)
 		if realPassword == req.Password { //} security.DecryptWithPrivateKey(req.Password,user.PrivateKey) {
 			token, err = verify.SignToken(strconv.FormatInt(user.Id, 10))
+			if err == nil {
+				publicKey = user.PublicKey
+			}
 		} else {
 			err = errors.New("wrong password")
 			code = api.CodeWrongPassword
@@ -64,5 +67,5 @@ func (req *ReqLogIn) LogIn() (token string, code int, err error) {
 		err = errors.New("user does not exist")
 		code = api.CodeUserNotExist
 	}
-	return token, code, err
+	return
 }
