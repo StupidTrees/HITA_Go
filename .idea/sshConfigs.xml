@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SshConfigs">
+    <configs>
+      <sshConfig host="hita.store" id="2a74bfd6-60d2-460b-80aa-0a83010d29fe" keyPath="C:\tools\aliyun\stupidtree.pem" port="22" nameFormat="DESCRIPTIVE" username="root" />
+    </configs>
+  </component>
+</project>

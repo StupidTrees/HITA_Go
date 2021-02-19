@@ -13,6 +13,7 @@ type User struct {
 	Password   string    `json:"password" gorm:"column:password; not null"`
 	Nickname   string    `json:"nickname" gorm:"column:nickname"`
 	Gender     string    `json:"gender" gorm:"type:enum('OTHER','MALE','FEMALE');default:OTHER"`
+	Avatar     string    `json:"avatar" gorm:"column:avatar"`
 	StudentId  string    `json:"student_id"`
 	School     string    `json:"school"`
 	PublicKey  string    `gorm:"column:public_key;not null"`
@@ -36,10 +37,29 @@ func (user *User) AddUser() (id int64, err error) {
 	return
 }
 
-func (user *User) FindUser() error {
+func (user *User) FindByUsername() error {
 	if orm.DB.Where("username = ?", user.UserName).First(user).RecordNotFound() {
 		return errors.New("user not exist")
 	}
+	return nil
+}
+
+func (user *User) FindById() error {
+	if orm.DB.Where("id = ?", user.Id).First(user).RecordNotFound() {
+		return errors.New("user not exist")
+	}
+	return nil
+}
+
+func (user *User) Exists() bool {
+	return !orm.DB.Model(user).First(user, "id=?", user.Id).RecordNotFound()
+}
+
+func (user *User) ChangeUserAvatar(filename string) error {
+	if !user.Exists() {
+		return errors.New("user not exist")
+	}
+	orm.DB.Model(user).Update("avatar", filename)
 	return nil
 }
 
@@ -81,7 +101,7 @@ func (user *User) FindUser() error {
 //	ra, err = rs.RowsAffected()
 //	return
 //}
-//
+
 //func (p *Person) DelPerson() (ra int64, err error) {
 //	rs, err := db.SqlDB.Exec("DELETE FROM person WHERE id=?", p.Id)
 //	if err != nil {

@@ -52,7 +52,7 @@ func (req *ReqLogIn) LogIn() (token string, publicKey string, code int, err erro
 	var user = repo.User{
 		UserName: req.Username,
 	}
-	if user.FindUser() == nil {
+	if user.FindByUsername() == nil {
 		realPassword := security.DecryptWithPublicKey(user.Password, user.PublicKey)
 		if realPassword == req.Password { //} security.DecryptWithPrivateKey(req.Password,user.PrivateKey) {
 			token, err = verify.SignToken(strconv.FormatInt(user.Id, 10))
