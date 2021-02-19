@@ -5,74 +5,57 @@ import (
 	"github.com/gin-gonic/gin"
 	"hita/service"
 	"hita/utils/api"
-	"hita/utils/logger"
 )
 
 func SignUp(c *gin.Context) {
 	var req service.ReqSignUp
-	var token string
-	var publicKey string
-	resultCode := 0
-	message := ""
+	var result api.StdResp
 	err := c.ShouldBind(&req)
 	if err != nil {
-		resultCode = -1
-		message = "request param error!:" + err.Error()
-		logger.Errorln(message)
+		result.Code = -1
+		result.Message = "request param error!:" + err.Error()
 	} else {
 		if req.Gender != "MALE" && req.Gender != "FEMALE" && req.Gender != "OTHER" {
-			resultCode = api.CodeWrongParam
-			message = "wrong param！"
+			result.Code = api.CodeWrongParam
+			result.Message = "wrong param！"
 		} else {
-			token, publicKey, resultCode, err = req.SignUp()
+			result.Data, result.Code, err = req.SignUp()
 			if err != nil {
-				message = err.Error()
+				result.Message = err.Error()
+				result.Data = err
 			} else {
-				resultCode = api.CodeSuccess
-				message = "success!"
+				result.Code = api.CodeSuccess
+				result.Message = "success!"
 			}
 		}
 	}
 	//响应给客户端
-	c.JSON(200, api.StdResp{
-		Code:    resultCode,
-		Message: message,
-		Data: gin.H{
-			"token":      token,
-			"public_key": publicKey,
-		},
-	})
+	c.JSON(200, result)
 }
 
 func LogIn(c *gin.Context) {
 	var req service.ReqLogIn
-	var token string
-	var publicKey string
-	resultCode := 0
-	message := ""
-	err := c.ShouldBind(&req)
+	var result api.StdResp
+	var err error
+	err = c.ShouldBind(&req)
 	if err != nil {
-		resultCode = api.CodeWrongParam
-		message = "request param error!:" + err.Error()
+		result.Code = api.CodeWrongParam
+		result.Message = "request param error!"
 	} else {
 		if len(req.Username) == 0 {
-			resultCode = api.CodeWrongParam
-			message = "username shouldn't be empty!"
+			result.Code = api.CodeWrongParam
+			result.Message = "username shouldn't be empty!"
 		} else {
-			token, publicKey, resultCode, err = req.LogIn()
+			result.Data, result.Code, err = req.LogIn()
 			if err == nil {
-				resultCode = api.CodeSuccess
-				message = "success!"
+				result.Code = api.CodeSuccess
+				result.Message = "success!"
 			} else {
-				message = err.Error()
+				result.Data = err
+				result.Message = "login failed"
 			}
 		}
 	}
 	//响应给客户端
-	c.JSON(200, api.StdResp{
-		Code: resultCode, Message: message, Data: gin.H{
-			"token":      token,
-			"public_key": publicKey,
-		},
-	})
+	c.JSON(200, result)
 }

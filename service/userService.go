@@ -21,7 +21,20 @@ type ReqLogIn struct {
 	Password string `form:"password" json:"password"`
 }
 
-func (req *ReqSignUp) SignUp() (token string, publicKey string, code int, err error) {
+type RespLogin struct {
+	Id        int64  `json:"id"`
+	Username  string `json:"username"`
+	Nickname  string `json:"nickname"`
+	Gender    string `json:"gender"`
+	Avatar    string `json:"avatar"`
+	Signature string `json:"signature"`
+	StudentId string `json:"studentId"`
+	School    string `json:"school"`
+	PublicKey string `json:"publicKey"`
+	Token     string `json:"token"`
+}
+
+func (req *ReqSignUp) SignUp() (data RespLogin, code int, err error) {
 	var user = repo.User{
 		UserName: req.Username,
 		Nickname: req.Nickname,
@@ -31,7 +44,6 @@ func (req *ReqSignUp) SignUp() (token string, publicKey string, code int, err er
 	//生成用户公私钥对
 	user.PublicKey, user.PrivateKey, err = security.GenerateRSAKeysStr()
 	if err != nil {
-		publicKey = ""
 		code = api.CodeOtherError
 		return
 	}
@@ -39,8 +51,12 @@ func (req *ReqSignUp) SignUp() (token string, publicKey string, code int, err er
 	user.Password = security.EncryptWithPrivateKey(user.Password, user.PrivateKey)
 	_, err = user.AddUser()
 	if err == nil {
-		token, err = verify.SignToken(strconv.FormatInt(user.Id, 10))
-		publicKey = user.PublicKey
+		data.Token, err = verify.SignToken(strconv.FormatInt(user.Id, 10))
+		data.PublicKey = user.PublicKey
+		data.Username = user.UserName
+		data.Gender = user.Gender
+		data.Id = user.Id
+		data.Nickname = user.Nickname
 	} else {
 		code = api.CodeUserExists
 		err = errors.New("user already exists")
@@ -48,16 +64,24 @@ func (req *ReqSignUp) SignUp() (token string, publicKey string, code int, err er
 	return
 }
 
-func (req *ReqLogIn) LogIn() (token string, publicKey string, code int, err error) {
+func (req *ReqLogIn) LogIn() (data RespLogin, code int, err error) {
 	var user = repo.User{
 		UserName: req.Username,
 	}
 	if user.FindByUsername() == nil {
 		realPassword := security.DecryptWithPublicKey(user.Password, user.PublicKey)
 		if realPassword == req.Password { //} security.DecryptWithPrivateKey(req.Password,user.PrivateKey) {
-			token, err = verify.SignToken(strconv.FormatInt(user.Id, 10))
+			data.Token, err = verify.SignToken(strconv.FormatInt(user.Id, 10))
 			if err == nil {
-				publicKey = user.PublicKey
+				data.Id = user.Id
+				data.Avatar = user.Avatar
+				data.Username = user.UserName
+				data.School = user.School
+				data.StudentId = user.StudentId
+				data.Gender = user.Gender
+				data.Signature = user.Signature
+				data.PublicKey = user.PublicKey
+				data.Nickname = user.Nickname
 			}
 		} else {
 			err = errors.New("wrong password")

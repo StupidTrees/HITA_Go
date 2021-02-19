@@ -16,6 +16,7 @@ type User struct {
 	Avatar     string    `json:"avatar" gorm:"column:avatar"`
 	StudentId  string    `json:"student_id"`
 	School     string    `json:"school"`
+	Signature  string    `json:"signature"`
 	PublicKey  string    `gorm:"column:public_key;not null"`
 	PrivateKey string    `gorm:"column:private_key;not null"`
 	CreateTime time.Time `json:"create_time" gorm:"column:createtime;default:null"`

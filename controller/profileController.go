@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"hita/config"
 	"hita/repository"
+	"hita/service"
 	"hita/utils/api"
 	"hita/utils/logger"
 	"io/ioutil"
@@ -31,6 +32,7 @@ func UploadAvatar(c *gin.Context) {
 			if err == nil {
 				result.Code = api.CodeSuccess
 				result.Message = "上传成功"
+				result.Data = filename
 			} else {
 				_ = os.Remove(fullPath) //删除文件
 				result.Code = api.CodeUserNotExist
@@ -76,4 +78,26 @@ func GetAvatar(c *gin.Context) {
 		result.Code = api.CodeUserNotExist
 		c.JSON(http.StatusOK, result)
 	}
+}
+
+func GetBasicProfile(c *gin.Context) {
+	result := api.StdResp{}
+	id, err := api.GetHeaderUserId(c)
+	if err == nil {
+		data, code, err := service.GetBasicProfile(id)
+		if err == nil {
+			result.Data = data
+			result.Message = "success"
+			result.Code = api.CodeSuccess
+		} else {
+			result.Data = err
+			result.Message = err.Error()
+			result.Code = code
+		}
+	} else {
+		result.Data = err
+		result.Message = "wrong id format!"
+		result.Code = api.CodeWrongParam
+	}
+	c.JSON(http.StatusOK, result)
 }

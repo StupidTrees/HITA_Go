@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"github.com/gin-gonic/gin"
+	"hita/utils/api"
 	"hita/utils/verify"
 	"net/http"
 	"strings"
@@ -15,7 +16,7 @@ func JWTAuthMiddleware(c *gin.Context) {
 	authHeader := c.Request.Header.Get("Authorization")
 	if authHeader == "" {
 		c.JSON(http.StatusOK, gin.H{
-			"code": 2003,
+			"code": api.CodeInvalidToken,
 			"msg":  "请求头中auth为空",
 		})
 		c.Abort()
@@ -25,7 +26,7 @@ func JWTAuthMiddleware(c *gin.Context) {
 	parts := strings.SplitN(authHeader, " ", 2)
 	if !(len(parts) == 2 && parts[0] == "Bearer") {
 		c.JSON(http.StatusOK, gin.H{
-			"code": 2004,
+			"code": api.CodeInvalidToken,
 			"msg":  "请求头中auth格式有误",
 		})
 		c.Abort()
@@ -35,7 +36,7 @@ func JWTAuthMiddleware(c *gin.Context) {
 	mc, err := verify.ParseToken(parts[1])
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
-			"code": 2005,
+			"code": api.CodeInvalidToken,
 			"msg":  "无效的Token",
 		})
 		c.Abort()

@@ -57,6 +57,7 @@ func main() {
 	profileRoutes := router.Group("/profile")
 	{
 		profileRoutes.POST("upload_avatar", controller.UploadAvatar)
+		profileRoutes.GET("get", controller.GetBasicProfile)
 	}
 
 	//路由在指定端口Run起来（异步）
