@@ -58,6 +58,9 @@ func main() {
 	{
 		profileRoutes.POST("upload_avatar", controller.UploadAvatar)
 		profileRoutes.GET("get", controller.GetBasicProfile)
+		profileRoutes.POST("change_signature", controller.ChangeSignature)
+		profileRoutes.POST("change_gender", controller.ChangeGender)
+		profileRoutes.POST("change_nickname", controller.ChangeNickname)
 	}
 
 	//路由在指定端口Run起来（异步）

@@ -52,6 +52,45 @@ func UploadAvatar(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
+func changeProfile(c *gin.Context, param string, attr string) {
+	result := api.StdResp{}
+	id, err := api.GetHeaderUserId(c)
+	if err == nil {
+		user := repository.User{Id: id}
+		err = user.ChangeUserProfile(attr, c.PostForm(param))
+		if err == nil {
+			result.Message = "success"
+			result.Code = api.CodeSuccess
+		} else {
+			result.Data = err
+			result.Code = api.CodeOtherError
+			result.Message = "operation failed"
+		}
+	} else {
+		result.Data = err
+		result.Code = api.CodeWrongParam
+		result.Message = "wrong header"
+	}
+	c.JSON(http.StatusOK, result)
+}
+
+func ChangeSignature(c *gin.Context) {
+	changeProfile(c, "signature", "signature")
+}
+
+func ChangeNickname(c *gin.Context) {
+	changeProfile(c, "nickname", "nickname")
+}
+
+func ChangeGender(c *gin.Context) {
+	var param = c.PostForm("gender")
+	if param == "MALE" || param == "FEMALE" || param == "OTHER" {
+		changeProfile(c, "gender", "gender")
+	} else {
+		c.JSON(http.StatusOK, api.StdResp{Code: api.CodeWrongParam, Message: "wrong param!"})
+	}
+}
+
 func GetAvatar(c *gin.Context) {
 	result := api.StdResp{}
 	id, _ := strconv.ParseInt(c.Query("userId"), 10, 64)

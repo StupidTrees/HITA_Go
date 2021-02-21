@@ -64,6 +64,16 @@ func (user *User) ChangeUserAvatar(filename string) error {
 	return nil
 }
 
+func (user *User) ChangeUserProfile(attr string, value string) error {
+	if !user.Exists() {
+		return errors.New("user not exist")
+	}
+	if orm.DB.Model(user).Update(attr, value).RowsAffected == 0 {
+		return errors.New("no such attribute")
+	}
+	return nil
+}
+
 //func (p *Person) GetPersons() (persons []Person, err error) {
 //	persons = make([]Person, 0)
 //	rows, err := db.SqlDB.Query("SELECT id, first_name, last_name FROM person")
