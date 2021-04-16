@@ -32,6 +32,10 @@ func init() {
 		logger.Fatalln("InitDB failed:", err)
 	} else {
 		mysql.DB.AutoMigrate(&repository.User{})
+		mysql.DB.AutoMigrate(&repository.Timetable{})
+		mysql.DB.AutoMigrate(&repository.TermSubject{})
+		mysql.DB.AutoMigrate(&repository.Event{})
+		mysql.DB.AutoMigrate(&repository.History{})
 	}
 
 	logger.Println("init db success")
@@ -52,6 +56,12 @@ func main() {
 		userRoutes.POST("/log_in", controller.LogIn)
 	}
 	router.GET("/profile/avatar", controller.GetAvatar)
+
+	syncRoutes := router.Group("/sync")
+	{
+		syncRoutes.POST("/sync", controller.Sync)
+		syncRoutes.POST("/push", controller.Push)
+	}
 	router.Use(middleware.JWTAuthMiddleware)
 
 	profileRoutes := router.Group("/profile")
