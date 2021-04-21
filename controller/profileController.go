@@ -120,10 +120,12 @@ func GetAvatar(c *gin.Context) {
 }
 
 func GetBasicProfile(c *gin.Context) {
+	req := service.ProfileReq{}
 	result := api.StdResp{}
-	id, err := api.GetHeaderUserId(c)
+	err := c.ShouldBind(&req)
 	if err == nil {
-		data, code, err := service.GetBasicProfile(id)
+		id, err := api.GetHeaderUserId(c)
+		data, code, err := req.GetBasicProfile(id)
 		if err == nil {
 			result.Data = data
 			result.Message = "success"

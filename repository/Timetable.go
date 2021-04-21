@@ -1,8 +1,9 @@
 package repository
 
 import (
+	"database/sql/driver"
 	"encoding/json"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm/clause"
 	orm "hita/utils/mysql"
 	"time"
 )
@@ -23,6 +24,27 @@ type SString string
 func (t MTime) MarshalJSON() ([]byte, error) {
 	return json.Marshal(time.Time(t).Unix() * 1000)
 }
+func (t *MTime) UnmarshalJSON(b []byte) error {
+	var i int64
+	err := json.Unmarshal(b, &i)
+	if err == nil {
+		*t = MTime(time.Unix(i/1000, 0))
+	}
+	return err
+}
+
+// 写入数据库之前，对数据做类型转换
+func (t MTime) Value() (driver.Value, error) {
+	x := time.Time(t)
+	return x, nil
+}
+
+// 将数据库中取出的数据，赋值给目标类型
+func (t *MTime) Scan(v interface{}) error {
+	x := v.(time.Time)
+	*t = MTime(x)
+	return nil
+}
 
 func (s SString) MarshalJSON() ([]byte, error) {
 	var l []map[string]map[string]int
@@ -35,20 +57,16 @@ func (Timetable) TableName() string {
 }
 
 func AddTimetables(timetables []Timetable) {
-	for _, tt := range timetables {
-		results := orm.DB.Model(Timetable{}).Where("id = ?", tt.Id).First(&Timetable{})
-		if results.Error != nil {
-			if results.Error == gorm.ErrRecordNotFound {
-				orm.DB.Model(Timetable{}).Save(tt)
-			}
-		} else {
-			orm.DB.Model(Timetable{}).Update(tt)
-		}
+	if len(timetables) > 0 {
+		orm.DB.Clauses(clause.OnConflict{
+			UpdateAll: true,
+		}).Create(&timetables)
 	}
+
 }
 
 func RemoveTimetablesInIds(ids []string) {
-	orm.DB.Delete(Timetable{}).Where("id in (?)", ids)
+	orm.DB.Where("id in (?)", ids).Delete(Timetable{})
 }
 
 func GetTimetablesInIds(uid string, ids []string) []Timetable {

@@ -2,8 +2,7 @@ package repository
 
 import (
 	"encoding/json"
-	"errors"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm/clause"
 	orm "hita/utils/mysql"
 )
 
@@ -32,24 +31,16 @@ func (h *History) SetIds(list []string) {
 
 func GetLatestId(uid string) (id int64, err error) {
 	history := History{}
-	if orm.DB.Raw("select id from history where uid = ? order by id desc limit 1", uid).Scan(&history).RecordNotFound() {
-		err = errors.New("user not exist")
-	}
+	orm.DB.Raw("select id from history where uid = ? order by id desc limit 1", uid).Scan(&history)
 	id = history.Id
 	return
 }
 
 func SaveHistories(hList []History) {
-	for _, h := range hList {
-		results := orm.DB.Model(History{}).Where("id = ?", h.Id).First(&History{})
-		if results.Error != nil {
-			if results.Error == gorm.ErrRecordNotFound {
-				orm.DB.Model(History{}).Save(h)
-			}
-		} else {
-			orm.DB.Model(History{}).Update(h)
-		}
-
+	if len(hList) > 0 {
+		orm.DB.Clauses(clause.OnConflict{
+			UpdateAll: true,
+		}).Create(&hList)
 	}
 }
 

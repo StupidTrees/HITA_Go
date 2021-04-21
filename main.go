@@ -31,11 +31,16 @@ func init() {
 	if err != nil {
 		logger.Fatalln("InitDB failed:", err)
 	} else {
-		mysql.DB.AutoMigrate(&repository.User{})
-		mysql.DB.AutoMigrate(&repository.Timetable{})
-		mysql.DB.AutoMigrate(&repository.TermSubject{})
-		mysql.DB.AutoMigrate(&repository.Event{})
-		mysql.DB.AutoMigrate(&repository.History{})
+		_ = mysql.DB.AutoMigrate(&repository.User{})
+		_ = mysql.DB.AutoMigrate(&repository.Timetable{})
+		_ = mysql.DB.AutoMigrate(&repository.TermSubject{})
+		_ = mysql.DB.AutoMigrate(&repository.Event{})
+		_ = mysql.DB.AutoMigrate(&repository.History{})
+		_ = mysql.DB.AutoMigrate(&repository.Article{})
+		_ = mysql.DB.AutoMigrate(&repository.UserLikeArticle{})
+		_ = mysql.DB.AutoMigrate(&repository.Comment{})
+		_ = mysql.DB.AutoMigrate(&repository.UserLikeComment{})
+		_ = mysql.DB.AutoMigrate(&repository.Follow{})
 	}
 
 	logger.Println("init db success")
@@ -71,8 +76,23 @@ func main() {
 		profileRoutes.POST("change_signature", controller.ChangeSignature)
 		profileRoutes.POST("change_gender", controller.ChangeGender)
 		profileRoutes.POST("change_nickname", controller.ChangeNickname)
+		profileRoutes.POST("follow", controller.FollowOrUnFollow)
 	}
-
+	articleRoutes := router.Group("/article")
+	{
+		articleRoutes.POST("create", controller.CreateArticle)
+		articleRoutes.GET("gets", controller.GetArticles)
+		articleRoutes.GET("get", controller.GetArticle)
+		articleRoutes.POST("like", controller.LikeOrUnlike)
+	}
+	commentRoutes := router.Group("/comment")
+	{
+		commentRoutes.POST("create", controller.CreateComment)
+		commentRoutes.GET("article", controller.GetCommentsOfArticle)
+		commentRoutes.GET("reply", controller.GetCommentsOfComment)
+		commentRoutes.GET("get", controller.GetCommentInfo)
+		commentRoutes.POST("like", controller.LikeOrUnlikeComment)
+	}
 	//路由在指定端口Run起来（异步）
 	go func() {
 		err := router.Run(":" + config.PORT)

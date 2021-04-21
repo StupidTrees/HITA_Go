@@ -81,13 +81,16 @@ func (req *PushReq) Push(uid int64, historyList []repo.History, dataMap map[stri
 						var list []repo.Timetable
 						for _, ts := range tts {
 							tt := repo.Timetable{}
+							js, _ := json.Marshal(ts)
+							_ = json.Unmarshal(js, &tt)
+							//
 							tsJs := ts.(map[string]interface{})
-							tt.Id = tsJs["id"].(string)
+							//tt.Id = tsJs["id"].(string)
 							tt.UserId = uid
-							tt.Code = tsJs["code"].(string)
-							tt.Name = tsJs["name"].(string)
-							tt.StartTime = repo.MTime(time.Unix(int64(tsJs["startTime"].(float64))/1000, 0))
-							tt.EndTime = repo.MTime(time.Unix(int64(tsJs["endTime"].(float64))/1000, 0))
+							//tt.Code = tsJs["code"].(string)
+							//tt.Name = tsJs["name"].(string)
+							//tt.StartTime = repo.MTime(time.Unix(int64(tsJs["startTime"].(float64))/1000, 0))
+							//tt.EndTime = repo.MTime(time.Unix(int64(tsJs["endTime"].(float64))/1000, 0))
 							st, _ := json.Marshal(tsJs["scheduleStructure"])
 							tt.ScheduleStructure = repo.SString(st)
 							list = append(list, tt)

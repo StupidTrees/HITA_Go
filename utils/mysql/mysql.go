@@ -2,7 +2,9 @@ package mysql
 
 import (
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/jinzhu/gorm"
+	//"github.com/jinzhu/gorm"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 	"hita/config"
 	"log"
 )
@@ -14,7 +16,8 @@ var DB *gorm.DB
 func InitDB() error {
 	var err error
 	dbDriver := config.MysqlUsername + ":" + config.MysqlPassword + "@tcp(" + config.MysqlIp + ":" + config.MysqlPort + ")/" + config.MysqlDbname + "?charset=utf8&parseTime=true"
-	DB, err = gorm.Open("mysql", dbDriver)
+	DB, err = gorm.Open(mysql.Open(dbDriver))
+	//DB, err = gorm.Open("mysql", dbDriver)
 	if err != nil {
 		log.Fatal(err.Error())
 	}

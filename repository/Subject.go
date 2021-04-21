@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm/clause"
 	orm "hita/utils/mysql"
 )
 
@@ -25,20 +25,16 @@ func (TermSubject) TableName() string {
 }
 
 func AddSubjects(subjects []TermSubject) {
-	for _, tt := range subjects {
-		results := orm.DB.Model(TermSubject{}).Where("id = ?", tt.Id).First(&TermSubject{})
-		if results.Error != nil {
-			if results.Error == gorm.ErrRecordNotFound {
-				orm.DB.Model(TermSubject{}).Save(tt)
-			}
-		} else {
-			orm.DB.Model(TermSubject{}).Update(tt)
-		}
+	if len(subjects) > 0 {
+		orm.DB.Clauses(clause.OnConflict{
+			UpdateAll: true,
+		}).Create(&subjects)
 	}
+
 }
 
 func RemoveSubjectInIds(ids []string) {
-	orm.DB.Delete(TermSubject{}).Where("id in (?)", ids)
+	orm.DB.Where("id in (?)", ids).Delete(TermSubject{})
 }
 
 func GetSubjectsInIds(uid string, ids []string) []TermSubject {

@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm/clause"
 	orm "hita/utils/mysql"
 )
 
@@ -25,20 +25,15 @@ func (Event) TableName() string {
 }
 
 func AddEvents(subjects []Event) {
-	for _, tt := range subjects {
-		results := orm.DB.Model(Event{}).Where("id = ?", tt.Id).First(&Event{})
-		if results.Error != nil {
-			if results.Error == gorm.ErrRecordNotFound {
-				orm.DB.Model(Event{}).Save(tt)
-			}
-		} else {
-			orm.DB.Model(Event{}).Update(tt)
-		}
+	if len(subjects) > 0 {
+		orm.DB.Clauses(clause.OnConflict{
+			UpdateAll: true,
+		}).Create(&subjects)
 	}
 }
 
 func RemoveEventsInIds(ids []string) {
-	orm.DB.Delete(Event{}).Where("id in (?)", ids)
+	orm.DB.Where("id in (?)", ids).Delete(Event{})
 }
 
 func GetEventsInIds(uid string, ids []string) []Event {

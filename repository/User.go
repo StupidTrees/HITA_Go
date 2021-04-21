@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"gorm.io/gorm"
 	"hita/utils/logger"
 	orm "hita/utils/mysql"
 	"time"
@@ -39,21 +40,24 @@ func (user *User) AddUser() (id int64, err error) {
 }
 
 func (user *User) FindByUsername() error {
-	if orm.DB.Where("username = ?", user.UserName).First(user).RecordNotFound() {
+	err := orm.DB.Where("username = ?", user.UserName).First(user).Error
+	if err != nil && err == gorm.ErrRecordNotFound {
 		return errors.New("user not exist")
 	}
 	return nil
 }
 
 func (user *User) FindById() error {
-	if orm.DB.Where("id = ?", user.Id).First(user).RecordNotFound() {
+	err := orm.DB.Where("id = ?", user.Id).First(user).Error
+	if err != nil && err == gorm.ErrRecordNotFound {
 		return errors.New("user not exist")
 	}
 	return nil
 }
 
 func (user *User) Exists() bool {
-	return !orm.DB.Model(user).First(user, "id=?", user.Id).RecordNotFound()
+	err := orm.DB.Model(user).First(user, "id=?", user.Id).Error
+	return err != gorm.ErrRecordNotFound
 }
 
 func (user *User) ChangeUserAvatar(filename string) error {
