@@ -68,9 +68,8 @@ func (req *SyncReq) Sync() (result RespSync, code int, error error) {
 }
 
 func (req *PushReq) Push(uid int64, historyList []repo.History, dataMap map[string][]interface{}) (code int, error error) {
-	repo.SaveHistories(historyList)
 	for _, history := range historyList {
-		fmt.Printf("history:%v,%v,%v\n", history.Id, history.Table, history.Action)
+		//fmt.Printf("history:%v,%v,%v\n", history.Id, history.Table, history.Action)
 		switch history.Action {
 		case "REQUIRE":
 			{
@@ -83,14 +82,8 @@ func (req *PushReq) Push(uid int64, historyList []repo.History, dataMap map[stri
 							tt := repo.Timetable{}
 							js, _ := json.Marshal(ts)
 							_ = json.Unmarshal(js, &tt)
-							//
 							tsJs := ts.(map[string]interface{})
-							//tt.Id = tsJs["id"].(string)
 							tt.UserId = uid
-							//tt.Code = tsJs["code"].(string)
-							//tt.Name = tsJs["name"].(string)
-							//tt.StartTime = repo.MTime(time.Unix(int64(tsJs["startTime"].(float64))/1000, 0))
-							//tt.EndTime = repo.MTime(time.Unix(int64(tsJs["endTime"].(float64))/1000, 0))
 							st, _ := json.Marshal(tsJs["scheduleStructure"])
 							tt.ScheduleStructure = repo.SString(st)
 							list = append(list, tt)
@@ -113,8 +106,6 @@ func (req *PushReq) Push(uid int64, historyList []repo.History, dataMap map[stri
 							tt.FromNumber = int8(tsJs["fromNumber"].(float64))
 							tt.LastNumber = int8(tsJs["lastNumber"].(float64))
 							tt.UserId = uid
-							//tt.Teacher = tsJs["teacher"].(string)
-							//tt.Place = tsJs["place"].(string)
 							tt.Name = tsJs["name"].(string)
 							tt.From = repo.MTime(time.Unix(int64(tsJs["from"].(float64))/1000, 0))
 							tt.To = repo.MTime(time.Unix(int64(tsJs["to"].(float64))/1000, 0))
@@ -131,17 +122,6 @@ func (req *PushReq) Push(uid int64, historyList []repo.History, dataMap map[stri
 							js, _ := json.Marshal(ts)
 							_ = json.Unmarshal(js, &tt)
 							tt.UserId = uid
-							//tt.TimetableId = tsJs["timetableId"].(string)
-							//tt.Id = tsJs["id"].(string)
-							//tt.Type = tsJs["type"].(string)
-							//tt.Name = tsJs["name"].(string)
-							//tt.Field = tsJs["field"].(string)
-							//tt.School = tsJs["school"].(string)
-							//tt.Code = tsJs["code"].(string)
-							//tt.Key = tsJs["key"].(string)
-							//tt.Color = tsJs["color"].(int32)
-							//tt.Credit = tsJs["place"].(float32)
-							//tt.CountInSPA = tsJs["countInSPA"].(bool)
 							list = append(list, tt)
 						}
 						repo.AddSubjects(list)
@@ -168,6 +148,7 @@ func (req *PushReq) Push(uid int64, historyList []repo.History, dataMap map[stri
 			}
 		}
 	}
+	repo.SaveHistories(historyList)
 	code = api.CodeSuccess
 	return
 }

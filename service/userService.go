@@ -26,7 +26,7 @@ type RespLogin struct {
 	Username  string `json:"username"`
 	Nickname  string `json:"nickname"`
 	Gender    string `json:"gender"`
-	Avatar    string `json:"avatar"`
+	Avatar    int64  `json:"avatar"`
 	Signature string `json:"signature"`
 	StudentId string `json:"studentId"`
 	School    string `json:"school"`

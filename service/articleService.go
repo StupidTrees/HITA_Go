@@ -53,21 +53,21 @@ type GetFollowingArticleReq struct {
 	Extra      string     `form:"extra" json:"extra"`
 }
 type ArticleResp struct {
-	Id               int64     `json:"id"`
-	AuthorId         int64     `json:"authorId"`
-	AuthorName       string    `json:"authorName"`
-	AuthorAvatar     string    `json:"authorAvatar"`
-	RepostId         string    `json:"repostId"`
-	RepostAuthorId   string    `json:"repostAuthorId"`
-	RepostAuthorName string    `json:"repostAuthorName"`
-	RepostContent    string    `json:"repostContent"`
-	RepostTime       time.Time `json:"reposeTime"`
-	Content          string    `json:"content"`
-	LikeNum          int       `json:"likeNum"`
-	Liked            bool      `json:"liked"`
-	CommentNum       int       `json:"commentNum"`
-	CreateTime       time.Time `json:"createTime"`
-	UpdateTime       time.Time `json:"updateTime"`
+	Id                 int64     `json:"id"`
+	AuthorId           int64     `json:"authorId"`
+	AuthorName         string    `json:"authorName"`
+	AuthorAvatar       int64     `json:"authorAvatar"`
+	RepostId           string    `json:"repostId"`
+	RepostAuthorId     string    `json:"repostAuthorId"`
+	RepostAuthorAvatar int64     `json:"repostAuthorAvatar"`
+	RepostAuthorName   string    `json:"repostAuthorName"`
+	RepostContent      string    `json:"repostContent"`
+	RepostTime         time.Time `json:"reposeTime"`
+	Content            string    `json:"content"`
+	LikeNum            int       `json:"likeNum"`
+	Liked              bool      `json:"liked"`
+	CommentNum         int       `json:"commentNum"`
+	CreateTime         time.Time `json:"createTime"`
 }
 
 func (req *GetFollowingArticleReq) GetFollowingArticle(userId int64) (result []ArticleResp, code int, error error) {
@@ -109,7 +109,6 @@ func (req *GetFollowingArticleReq) GetFollowingArticle(userId int64) (result []A
 				RepostId:     "",
 				CommentNum:   a.CommentNum,
 				CreateTime:   a.CreateTime,
-				UpdateTime:   a.UpdateTime,
 			}
 			if a.RepostId > 0 {
 				repostFrom := repository.Article{
@@ -122,6 +121,7 @@ func (req *GetFollowingArticleReq) GetFollowingArticle(userId int64) (result []A
 					articleFormed.RepostAuthorId = fmt.Sprint(repostFrom.AuthorId)
 					articleFormed.RepostTime = repostFrom.CreateTime
 					articleFormed.RepostAuthorName = repostFrom.Author.Nickname
+					articleFormed.RepostAuthorAvatar = repostFrom.Author.Avatar
 				}
 			}
 			res = append(res, articleFormed)
@@ -177,7 +177,6 @@ func (req *GetArticleReq) GetArticle(userId int64) (result ArticleResp, code int
 		Liked:        like.Exist(),
 		CommentNum:   realObj.CommentNum,
 		CreateTime:   realObj.CreateTime,
-		UpdateTime:   realObj.UpdateTime,
 	}
 	if realObj.RepostId > 0 && !req.DigOrigin {
 		repostFrom := repository.Article{
@@ -190,6 +189,7 @@ func (req *GetArticleReq) GetArticle(userId int64) (result ArticleResp, code int
 			result.RepostAuthorId = fmt.Sprint(repostFrom.AuthorId)
 			result.RepostTime = repostFrom.CreateTime
 			result.RepostAuthorName = repostFrom.Author.Nickname
+			result.RepostAuthorAvatar = repostFrom.Author.Avatar
 		}
 	}
 	return

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"hita/config"
 	"hita/controller"
@@ -41,6 +42,7 @@ func init() {
 		_ = mysql.DB.AutoMigrate(&repository.Comment{})
 		_ = mysql.DB.AutoMigrate(&repository.UserLikeComment{})
 		_ = mysql.DB.AutoMigrate(&repository.Follow{})
+		_ = mysql.DB.AutoMigrate(&repository.Image{})
 	}
 
 	logger.Println("init db success")
@@ -54,6 +56,7 @@ func main() {
 
 	//设置中间件
 	router.Use(gin.Recovery())
+	router.Use(middleware.TlsHandler()) //https
 
 	userRoutes := router.Group("/user")
 	{
@@ -95,8 +98,14 @@ func main() {
 	}
 	//路由在指定端口Run起来（异步）
 	go func() {
-		err := router.Run(":" + config.PORT)
-		println(err)
+		//err := router.Run(":" + config.PORT)
+		//println(err)
+		err := router.RunTLS(":39999", "middleware/hita.pem", "middleware/hita.key")
+		if err == nil {
+			fmt.Println("TLS Running...")
+		} else {
+			fmt.Printf("Run TLS error!:%v\n", err)
+		}
 	}()
 
 	// 等待中断信号来优雅地关闭服务器，为关闭服务器操作设置一个5秒的超时

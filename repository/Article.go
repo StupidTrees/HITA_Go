@@ -17,7 +17,7 @@ type Article struct {
 	LikeNum    int       `gorm:"not null;default:0;size:16"`
 	CommentNum int       `gorm:"not null;default:0;size:16"`
 	CreateTime time.Time `gorm:"column:create_time;autoCreateTime:milli"`
-	UpdateTime time.Time `gorm:"column:update_time;autoUpdateTime:milli"`
+	UpdateTime int64     `gorm:"column:update_time;autoUpdateTime:milli"`
 }
 
 func (Article) TableName() string {

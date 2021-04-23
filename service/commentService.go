@@ -72,10 +72,10 @@ type CommentResp struct {
 	ArticleId      int64     `json:"articleId"`
 	AuthorId       string    `json:"authorId"`
 	AuthorName     string    `json:"authorName"`
-	AuthorAvatar   string    `json:"authorAvatar"`
+	AuthorAvatar   int64     `json:"authorAvatar"`
 	ReceiverId     string    `json:"receiverId"`
 	ReceiverName   string    `json:"receiverName"`
-	ReceiverAvatar string    `json:"receiverAvatar"`
+	ReceiverAvatar int64     `json:"receiverAvatar"`
 	ReplyId        string    `json:"replyId"`
 	ReplyContent   string    `json:"replyContent"`
 	Content        string    `json:"content"`

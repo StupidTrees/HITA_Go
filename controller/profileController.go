@@ -3,6 +3,7 @@ package controller
 import (
 	_ "errors"
 	"github.com/gin-gonic/gin"
+	"github.com/rs/xid"
 	"hita/config"
 	"hita/repository"
 	"hita/service"
@@ -15,30 +16,64 @@ import (
 	"strconv"
 )
 
+func getAvatarPath(filename string) string {
+	return path.Join(logger.GetCurrentPath(), "..") + "/" + config.AvatarPath + filename
+}
+
 func UploadAvatar(c *gin.Context) {
 	result := api.StdResp{}
 	file, err := c.FormFile("upload")
 	if err == nil {
-		filename := c.Keys["userId"].(string) + path.Ext(file.Filename)
-		fullPath := path.Join(logger.GetCurrentPath(), "..") + "/" + config.AvatarPath + filename
+		filename := xid.New().String() + path.Ext(file.Filename)
+		fullPath := getAvatarPath(filename)
 		_ = os.MkdirAll(path.Dir(fullPath), os.ModePerm)
 		err = c.SaveUploadedFile(file, fullPath)
 		if err == nil {
 			idInt, _ := strconv.ParseInt(c.Keys["userId"].(string), 10, 64)
-			user := repository.User{
-				Id: idInt,
+			img := repository.Image{
+				Filename: filename,
+				Type:     "AVATAR",
 			}
-			err = user.ChangeUserAvatar(filename)
+			err = img.Create()
 			if err == nil {
-				result.Code = api.CodeSuccess
-				result.Message = "上传成功"
-				result.Data = filename
+				user := repository.User{
+					Id: idInt,
+				}
+				err = user.FindById()
+				if err == nil {
+					oldImg := repository.Image{
+						Id: user.Avatar,
+					}
+					_ = oldImg.Find()
+					oldFullPath := getAvatarPath(oldImg.Filename)
+					_ = os.Remove(oldFullPath) //删除原先文件
+					_ = oldImg.Delete()
+					err = user.ChangeUserAvatar(img.Id)
+					if err == nil {
+						result.Code = api.CodeSuccess
+						result.Message = "上传成功"
+						result.Data = img.Id
+					} else {
+						_ = os.Remove(fullPath) //删除文件
+						_ = img.Delete()
+						result.Code = api.CodeUserNotExist
+						result.Message = "用户不存在"
+						result.Data = gin.H{"error": err}
+					}
+				} else {
+					_ = os.Remove(fullPath) //删除文件
+					_ = img.Delete()
+					result.Code = api.CodeUserNotExist
+					result.Message = "用户不存在"
+					result.Data = gin.H{"error": err}
+				}
+
 			} else {
-				_ = os.Remove(fullPath) //删除文件
-				result.Code = api.CodeUserNotExist
-				result.Message = "用户不存在"
+				result.Code = -2
 				result.Data = gin.H{"error": err}
+				result.Message = "创建图片对象出错"
 			}
+
 		} else {
 			result.Code = -2
 			result.Data = gin.H{"error": err}
@@ -93,13 +128,13 @@ func ChangeGender(c *gin.Context) {
 
 func GetAvatar(c *gin.Context) {
 	result := api.StdResp{}
-	id, _ := strconv.ParseInt(c.Query("userId"), 10, 64)
-	user := repository.User{
+	id, _ := strconv.ParseInt(c.Query("imageId"), 10, 64)
+	image := repository.Image{
 		Id: id,
 	}
-	err := user.FindById()
+	err := image.Find()
 	if err == nil {
-		fullPath := path.Join(logger.GetCurrentPath(), "..") + "/" + config.AvatarPath + user.Avatar
+		fullPath := path.Join(logger.GetCurrentPath(), "..") + "/" + config.AvatarPath + image.Filename
 		c.Header("Content-Type", "image/jpeg")
 		c.Header("Content-Transfer-Encoding", "binary")
 		data, err := ioutil.ReadFile(fullPath)

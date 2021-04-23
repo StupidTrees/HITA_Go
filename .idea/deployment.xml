@@ -6,6 +6,13 @@
         <serverdata>
           <mappings>
             <mapping deploy="/home/webapp/hita" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="huawei">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/webapp/hita" local="$PROJECT_DIR$" web="/" />
             <mapping local="" />
           </mappings>
         </serverdata>

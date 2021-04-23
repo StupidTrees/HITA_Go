@@ -7,8 +7,8 @@ import (
 
 type Event struct {
 	UserId      int64
-	TimetableId string `json:"timetableId" gorm:"not null"`
-	SubjectId   string `json:"subjectId" gorm:"not null"`
+	TimetableId string `json:"timetableId"`
+	SubjectId   string `json:"subjectId" `
 	Id          string `json:"id" gorm:"PRIMARY_KEY"`
 	Type        string `json:"type" gorm:"type:enum('CLASS','EXAM','OTHER');default:'OTHER';not null"`
 	Name        string `json:"name" gorm:"not null"`

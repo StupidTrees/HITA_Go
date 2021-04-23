@@ -9,19 +9,19 @@ import (
 )
 
 type User struct {
-	Id         int64     `json:"id" gorm:"PRIMARY_KEY"`
+	Id         int64     `json:"id" gorm:"PRIMARY_KEY;AUTO_INCREMENT"`
 	UserName   string    `json:"username" gorm:"column:username; unique_index:username_idx; not null"`
 	Password   string    `json:"password" gorm:"column:password; not null"`
 	Nickname   string    `json:"nickname" gorm:"column:nickname"`
 	Gender     string    `json:"gender" gorm:"type:enum('OTHER','MALE','FEMALE');default:OTHER"`
-	Avatar     string    `json:"avatar" gorm:"column:avatar"`
+	Avatar     int64     `json:"avatar" gorm:"column:avatar"`
 	StudentId  string    `json:"student_id"`
 	School     string    `json:"school"`
 	Signature  string    `json:"signature"`
 	PublicKey  string    `gorm:"column:public_key;not null"`
 	PrivateKey string    `gorm:"column:private_key;not null"`
-	CreateTime time.Time `json:"create_time" gorm:"column:createtime;default:null"`
-	UpdateTime time.Time `json:"update_time" gorm:"column:updatetime;default:null"`
+	CreateTime time.Time `gorm:"column:create_time;autoCreateTime:milli"`
+	UpdateTime int64     `gorm:"column:update_time;autoUpdateTime:milli"`
 }
 
 func (User) TableName() string {
@@ -60,12 +60,11 @@ func (user *User) Exists() bool {
 	return err != gorm.ErrRecordNotFound
 }
 
-func (user *User) ChangeUserAvatar(filename string) error {
+func (user *User) ChangeUserAvatar(imageId int64) error {
 	if !user.Exists() {
 		return errors.New("user not exist")
 	}
-	orm.DB.Model(user).Update("avatar", filename)
-	return nil
+	return orm.DB.Model(user).Update("avatar", imageId).Error
 }
 
 func (user *User) ChangeUserProfile(attr string, value string) error {
