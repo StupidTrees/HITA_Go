@@ -9,3 +9,5 @@ const CodeUserExists int = 301
 const CodeParamEmpty int = 302
 const CodeUserNotExist int = 303
 const CodeWrongPassword int = 304
+const CodeArticleNotExist int = 305
+const CodePermissionDenied int = 333

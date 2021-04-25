@@ -1,8 +1,11 @@
 package repository
 
 import (
+	"hita/config"
 	"hita/utils/logger"
 	orm "hita/utils/mysql"
+	"os"
+	"path"
 )
 
 type Image struct {
@@ -23,9 +26,31 @@ func (i *Image) Create() error {
 	}
 	return nil
 }
-
+func GetAvatarPath(filename string) string {
+	return path.Join(logger.GetCurrentPath(), "..") + "/" + config.AvatarPath + filename
+}
+func GetArticleImagePath(filename string) string {
+	return path.Join(logger.GetCurrentPath(), "..") + "/" + config.ArticleImagePath + filename
+}
 func (i *Image) Delete() error {
-	return orm.DB.Where("id=?", i.Id).Delete(i).Error
+	err := i.Find()
+	if err == nil {
+		var filePath string
+		switch i.Type {
+		case "AVATAR":
+			{
+				filePath = GetAvatarPath(i.Filename)
+			}
+		case "POST":
+			{
+				filePath = GetArticleImagePath(i.Filename)
+			}
+		}
+		_ = os.Remove(filePath) //删除原先文件
+		return orm.DB.Where("id=?", i.Id).Delete(i).Error
+	} else {
+		return err
+	}
 }
 func (i *Image) Find() error {
 	return orm.DB.Where("id=?", i.Id).Find(i).Error

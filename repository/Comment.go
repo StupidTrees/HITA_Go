@@ -28,6 +28,21 @@ func (Comment) TableName() string {
 	return "comment"
 }
 
+func (c *Comment) Get() error {
+	return orm.DB.Where("id=?", c.Id).Find(c).Error
+}
+func (c *Comment) Delete() error {
+	err := c.Get()
+	if err == nil {
+		if c.ReplyId > 0 {
+			orm.DB.Exec("update comment set comment_num = comment_num-1 where id = ? or id=?", c.ReplyId, c.ContextId)
+		}
+		return orm.DB.Where("id=?", c.Id).Delete(c).Error
+	} else {
+		return err
+	}
+}
+
 func (a *Comment) Create() error {
 	result := orm.DB.Create(a)
 	if result.Error != nil {

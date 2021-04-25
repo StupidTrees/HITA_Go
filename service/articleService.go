@@ -14,10 +14,11 @@ type CreateArticleReq struct {
 	RepostId string `form:"repostId" json:"repostId"`
 }
 
-func (req *CreateArticleReq) CreateArticle(userId int64) (code int, error error) {
+func (req *CreateArticleReq) CreateArticle(userId int64, imageIds []int64) (code int, error error) {
 	article := repository.Article{
 		Content:  req.Content,
 		AuthorId: userId,
+		Images:   imageIds,
 	}
 	if len([]rune(req.RepostId)) > 0 {
 		repostIdInt, err := strconv.ParseInt(req.RepostId, 10, 64)
@@ -53,21 +54,23 @@ type GetFollowingArticleReq struct {
 	Extra      string     `form:"extra" json:"extra"`
 }
 type ArticleResp struct {
-	Id                 int64     `json:"id"`
-	AuthorId           int64     `json:"authorId"`
-	AuthorName         string    `json:"authorName"`
-	AuthorAvatar       int64     `json:"authorAvatar"`
-	RepostId           string    `json:"repostId"`
-	RepostAuthorId     string    `json:"repostAuthorId"`
-	RepostAuthorAvatar int64     `json:"repostAuthorAvatar"`
-	RepostAuthorName   string    `json:"repostAuthorName"`
-	RepostContent      string    `json:"repostContent"`
-	RepostTime         time.Time `json:"reposeTime"`
-	Content            string    `json:"content"`
-	LikeNum            int       `json:"likeNum"`
-	Liked              bool      `json:"liked"`
-	CommentNum         int       `json:"commentNum"`
-	CreateTime         time.Time `json:"createTime"`
+	Id                 int64                `json:"id"`
+	AuthorId           int64                `json:"authorId"`
+	AuthorName         string               `json:"authorName"`
+	AuthorAvatar       int64                `json:"authorAvatar"`
+	RepostId           string               `json:"repostId"`
+	RepostAuthorId     string               `json:"repostAuthorId"`
+	RepostAuthorAvatar int64                `json:"repostAuthorAvatar"`
+	RepostAuthorName   string               `json:"repostAuthorName"`
+	RepostContent      string               `json:"repostContent"`
+	RepostImages       repository.MIntArray `json:"repostImages"`
+	RepostTime         time.Time            `json:"reposeTime"`
+	Content            string               `json:"content"`
+	Images             repository.MIntArray `json:"images"`
+	LikeNum            int                  `json:"likeNum"`
+	Liked              bool                 `json:"liked"`
+	CommentNum         int                  `json:"commentNum"`
+	CreateTime         time.Time            `json:"createTime"`
 }
 
 func (req *GetFollowingArticleReq) GetFollowingArticle(userId int64) (result []ArticleResp, code int, error error) {
@@ -84,9 +87,25 @@ func (req *GetFollowingArticleReq) GetFollowingArticle(userId int64) (result []A
 		}
 	case "search":
 		{
-			{
-				articles, error = repository.SearchPosts(req.BeforeTime, req.AfterTime, req.PageSize, req.Extra)
+
+			articles, error = repository.SearchPosts(req.BeforeTime, req.AfterTime, req.PageSize, req.Extra)
+
+		}
+	case "user":
+		{
+			userIdInt, err := strconv.ParseInt(req.Extra, 10, 64)
+			if err != nil {
+				return nil, api.CodeWrongParam, err
 			}
+			articles, error = repository.GetUsersPosts(userIdInt, req.BeforeTime, req.AfterTime, req.PageSize)
+		}
+	case "repost":
+		{
+			articleIdInt, err := strconv.ParseInt(req.Extra, 10, 64)
+			if err != nil {
+				return nil, api.CodeWrongParam, err
+			}
+			articles, error = repository.GetReposts(articleIdInt, req.BeforeTime, req.AfterTime, req.PageSize)
 		}
 	}
 
@@ -104,6 +123,7 @@ func (req *GetFollowingArticleReq) GetFollowingArticle(userId int64) (result []A
 				AuthorName:   a.Author.Nickname,
 				AuthorAvatar: a.Author.Avatar,
 				Content:      a.Content,
+				Images:       a.Images,
 				LikeNum:      a.LikeNum,
 				Liked:        like.Exist(),
 				RepostId:     "",
@@ -122,6 +142,7 @@ func (req *GetFollowingArticleReq) GetFollowingArticle(userId int64) (result []A
 					articleFormed.RepostTime = repostFrom.CreateTime
 					articleFormed.RepostAuthorName = repostFrom.Author.Nickname
 					articleFormed.RepostAuthorAvatar = repostFrom.Author.Avatar
+					articleFormed.RepostImages = repostFrom.Images
 				}
 			}
 			res = append(res, articleFormed)
@@ -173,6 +194,7 @@ func (req *GetArticleReq) GetArticle(userId int64) (result ArticleResp, code int
 		AuthorName:   realObj.Author.Nickname,
 		AuthorAvatar: realObj.Author.Avatar,
 		Content:      realObj.Content,
+		Images:       realObj.Images,
 		LikeNum:      realObj.LikeNum,
 		Liked:        like.Exist(),
 		CommentNum:   realObj.CommentNum,
@@ -190,6 +212,7 @@ func (req *GetArticleReq) GetArticle(userId int64) (result ArticleResp, code int
 			result.RepostTime = repostFrom.CreateTime
 			result.RepostAuthorName = repostFrom.Author.Nickname
 			result.RepostAuthorAvatar = repostFrom.Author.Avatar
+			result.RepostImages = repostFrom.Images
 		}
 	}
 	return
@@ -235,4 +258,37 @@ func (req *LikeReq) LikeOrUnlike(userId int64) (data LikeResp, code int, error e
 
 	}
 	return
+}
+
+type DeleteArticleReq struct {
+	ArticleId string `form:"articleId" json:"articleId"`
+}
+
+func (req *DeleteArticleReq) DeleteArticle(userId int64) (code int, error error) {
+	idInt, err := strconv.ParseInt(req.ArticleId, 10, 64)
+	if err != nil {
+		return api.CodeWrongParam, err
+	}
+	article := repository.Article{
+		Id: idInt,
+	}
+	err = article.Get()
+	if err != nil {
+		return api.CodeArticleNotExist, err
+	}
+	if article.AuthorId != userId {
+		return api.CodePermissionDenied, fmt.Errorf("不是你的帖子！")
+	}
+	//删除图片文件
+	for _, id := range article.Images {
+		img := repository.Image{
+			Id: id,
+		}
+		_ = img.Delete()
+	}
+	err = article.Delete()
+	if err != nil {
+		return api.CodeOtherError, err
+	}
+	return api.CodeSuccess, nil
 }

@@ -64,7 +64,7 @@ func main() {
 		userRoutes.POST("/log_in", controller.LogIn)
 	}
 	router.GET("/profile/avatar", controller.GetAvatar)
-
+	router.GET("/article/image", controller.GetArticleImage)
 	syncRoutes := router.Group("/sync")
 	{
 		syncRoutes.POST("/sync", controller.Sync)
@@ -80,13 +80,16 @@ func main() {
 		profileRoutes.POST("change_gender", controller.ChangeGender)
 		profileRoutes.POST("change_nickname", controller.ChangeNickname)
 		profileRoutes.POST("follow", controller.FollowOrUnFollow)
+		profileRoutes.GET("gets", controller.GetUsers)
 	}
 	articleRoutes := router.Group("/article")
 	{
 		articleRoutes.POST("create", controller.CreateArticle)
+		articleRoutes.POST("create_images", controller.CreateArticleWithImages)
 		articleRoutes.GET("gets", controller.GetArticles)
 		articleRoutes.GET("get", controller.GetArticle)
 		articleRoutes.POST("like", controller.LikeOrUnlike)
+		articleRoutes.POST("delete", controller.DeleteArticle)
 	}
 	commentRoutes := router.Group("/comment")
 	{
@@ -95,6 +98,7 @@ func main() {
 		commentRoutes.GET("reply", controller.GetCommentsOfComment)
 		commentRoutes.GET("get", controller.GetCommentInfo)
 		commentRoutes.POST("like", controller.LikeOrUnlikeComment)
+		commentRoutes.POST("delete", controller.DeleteComment)
 	}
 	//路由在指定端口Run起来（异步）
 	go func() {

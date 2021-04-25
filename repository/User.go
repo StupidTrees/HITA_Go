@@ -9,19 +9,21 @@ import (
 )
 
 type User struct {
-	Id         int64     `json:"id" gorm:"PRIMARY_KEY;AUTO_INCREMENT"`
-	UserName   string    `json:"username" gorm:"column:username; unique_index:username_idx; not null"`
-	Password   string    `json:"password" gorm:"column:password; not null"`
-	Nickname   string    `json:"nickname" gorm:"column:nickname"`
-	Gender     string    `json:"gender" gorm:"type:enum('OTHER','MALE','FEMALE');default:OTHER"`
-	Avatar     int64     `json:"avatar" gorm:"column:avatar"`
-	StudentId  string    `json:"student_id"`
-	School     string    `json:"school"`
-	Signature  string    `json:"signature"`
-	PublicKey  string    `gorm:"column:public_key;not null"`
-	PrivateKey string    `gorm:"column:private_key;not null"`
-	CreateTime time.Time `gorm:"column:create_time;autoCreateTime:milli"`
-	UpdateTime int64     `gorm:"column:update_time;autoUpdateTime:milli"`
+	Id           int64     `json:"id" gorm:"PRIMARY_KEY;AUTO_INCREMENT"`
+	UserName     string    `json:"username" gorm:"column:username; unique_index:username_idx; not null"`
+	Password     string    `json:"password" gorm:"column:password; not null"`
+	Nickname     string    `json:"nickname" gorm:"column:nickname"`
+	Gender       string    `json:"gender" gorm:"type:enum('OTHER','MALE','FEMALE');default:OTHER"`
+	Avatar       int64     `json:"avatar" gorm:"column:avatar"`
+	StudentId    string    `json:"student_id"`
+	School       string    `json:"school"`
+	Signature    string    `json:"signature"`
+	PublicKey    string    `gorm:"column:public_key;not null"`
+	PrivateKey   string    `gorm:"column:private_key;not null"`
+	FollowingNum int16     `json:"followingNum" gorm:"following_num"`
+	FansNum      int16     `json:"fansNum" gorm:"fans_num"`
+	CreateTime   time.Time `gorm:"column:create_time;autoCreateTime:milli"`
+	UpdateTime   int64     `gorm:"column:update_time;autoUpdateTime:milli"`
 }
 
 func (User) TableName() string {
@@ -75,4 +77,19 @@ func (user *User) ChangeUserProfile(attr string, value string) error {
 		return errors.New("no such attribute")
 	}
 	return nil
+}
+
+func GetLikedUsers(articleId int64, pageSize int, pageNum int) (result []User, err error) {
+	err = orm.DB.Raw("select * from user where id in (?)", orm.DB.Raw("select user_id from user_like_articles where article_id = ?", articleId)).Limit(pageSize).Offset(pageSize * (pageNum - 1)).Scan(&result).Error
+	return
+}
+
+func GetFans(userId int64, pageSize int, pageNum int) (result []User, err error) {
+	err = orm.DB.Raw("select * from user where id in (?)", orm.DB.Raw("select user_id from follows where following_id = ?", userId)).Limit(pageSize).Offset(pageSize * (pageNum - 1)).Scan(&result).Error
+	return
+}
+
+func GetFollowing(userId int64, pageSize int, pageNum int) (result []User, err error) {
+	err = orm.DB.Raw("select * from user where id in (?)", orm.DB.Raw("select following_id from follows where user_id = ?", userId)).Limit(pageSize).Offset(pageSize * (pageNum - 1)).Scan(&result).Error
+	return
 }

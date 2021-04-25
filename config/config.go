@@ -18,6 +18,7 @@ var ServerPrivateKey string
 var ServerPublicKey string
 var PORT string
 var AvatarPath string
+var ArticleImagePath string
 
 type ClientInfo struct {
 	ClientSecret string
@@ -57,7 +58,7 @@ func loadFromConfigFile(configFilePath string) error {
 	ServerPublicKey = jsonConfig.Get("SERVER_PUBLIC_KEY").ToString()
 	ServerPrivateKey = jsonConfig.Get("SERVER_PRIVATE_KEY").ToString()
 	AvatarPath = jsonConfig.Get("AVATAR_PATH").ToString()
-
+	ArticleImagePath = jsonConfig.Get("ARTICLE_IMAGE_PATH").ToString()
 	if MysqlIp == "" || MysqlUsername == "" || MysqlPassword == "" || MysqlPort == "" || PORT == "" || MysqlDbname == "" {
 		return errors.New("config is error")
 	}

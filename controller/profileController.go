@@ -16,16 +16,12 @@ import (
 	"strconv"
 )
 
-func getAvatarPath(filename string) string {
-	return path.Join(logger.GetCurrentPath(), "..") + "/" + config.AvatarPath + filename
-}
-
 func UploadAvatar(c *gin.Context) {
 	result := api.StdResp{}
 	file, err := c.FormFile("upload")
 	if err == nil {
 		filename := xid.New().String() + path.Ext(file.Filename)
-		fullPath := getAvatarPath(filename)
+		fullPath := repository.GetAvatarPath(filename)
 		_ = os.MkdirAll(path.Dir(fullPath), os.ModePerm)
 		err = c.SaveUploadedFile(file, fullPath)
 		if err == nil {
@@ -44,9 +40,6 @@ func UploadAvatar(c *gin.Context) {
 					oldImg := repository.Image{
 						Id: user.Avatar,
 					}
-					_ = oldImg.Find()
-					oldFullPath := getAvatarPath(oldImg.Filename)
-					_ = os.Remove(oldFullPath) //删除原先文件
 					_ = oldImg.Delete()
 					err = user.ChangeUserAvatar(img.Id)
 					if err == nil {
@@ -54,14 +47,12 @@ func UploadAvatar(c *gin.Context) {
 						result.Message = "上传成功"
 						result.Data = img.Id
 					} else {
-						_ = os.Remove(fullPath) //删除文件
 						_ = img.Delete()
 						result.Code = api.CodeUserNotExist
 						result.Message = "用户不存在"
 						result.Data = gin.H{"error": err}
 					}
 				} else {
-					_ = os.Remove(fullPath) //删除文件
 					_ = img.Delete()
 					result.Code = api.CodeUserNotExist
 					result.Message = "用户不存在"
@@ -176,4 +167,29 @@ func GetBasicProfile(c *gin.Context) {
 		result.Code = api.CodeWrongParam
 	}
 	c.JSON(http.StatusOK, result)
+}
+
+func GetUsers(c *gin.Context) {
+	var req service.GetUserReq
+	var result api.StdResp
+	var err error
+	err = c.ShouldBind(&req)
+	if err != nil {
+		result.Code = api.CodeWrongParam
+		result.Message = "request param error!"
+	} else {
+		id, err := api.GetHeaderUserId(c)
+		result.Data, result.Code, err = req.GetUser(id)
+		if err == nil {
+			result.Code = api.CodeSuccess
+			result.Message = "success!"
+		} else {
+			result.Data = err
+			result.Message = "create failed"
+
+		}
+	}
+	//fmt.Println(result)
+	//响应给客户端
+	c.JSON(200, result)
 }

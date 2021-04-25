@@ -278,3 +278,29 @@ func (req *LikeCommentReq) LikeOrUnlike(userId int64) (data LikeResp, code int, 
 	}
 	return
 }
+
+type DeleteCommentReq struct {
+	CommentId string `form:"commentId" json:"commentId"`
+}
+
+func (req *DeleteCommentReq) DeleteComment(userId int64) (code int, error error) {
+	idInt, err := strconv.ParseInt(req.CommentId, 10, 64)
+	if err != nil {
+		return api.CodeWrongParam, err
+	}
+	comment := repository.Comment{
+		Id: idInt,
+	}
+	err = comment.Get()
+	if err != nil {
+		return api.CodeArticleNotExist, err
+	}
+	if comment.AuthorId != userId {
+		return api.CodePermissionDenied, fmt.Errorf("不是你的评论！")
+	}
+	err = comment.Delete()
+	if err != nil {
+		return api.CodeOtherError, err
+	}
+	return api.CodeSuccess, nil
+}
