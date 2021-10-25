@@ -29,6 +29,16 @@ func (req *CreateCommentReq) CreateComment(userId int64) (code int, error error)
 	if er != nil {
 		return api.CodeWrongParam, er
 	}
+
+	if recIdInt == repository.AnonymousId { //匿名文章
+		article := repository.Article{
+			Id: articleIdInt,
+		}
+		e := article.Get()
+		if e == nil{
+			recIdInt = article.AuthorId
+		}
+	}
 	var repIdInt int64
 	if len([]rune(req.ReplyId)) > 0 {
 		repIdInt, error = strconv.ParseInt(req.ReplyId, 10, 64)
@@ -260,6 +270,23 @@ func (req *LikeCommentReq) LikeOrUnlike(userId int64) (data LikeResp, code int, 
 		error = userLike.Create()
 	} else {
 		error = userLike.Delete()
+	}
+	if error == nil && req.Like {
+		a := repository.Comment{
+			Id: aId,
+		}
+		error = a.Get()
+		if error == nil && a.AuthorId != userId {
+			msg := repository.Message{
+				UserId:      a.AuthorId,
+				OtherId:     userId,
+				Action:      "LIKE",
+				Type:        "COMMENT",
+				ReferenceId: fmt.Sprint(a.Id),
+				CreateTime:  userLike.CreateTime,
+			}
+			_ = msg.Create()
+		}
 	}
 	if error != nil {
 		code = api.CodeOtherError

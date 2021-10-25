@@ -1,140 +1,87 @@
 package service
 
 import (
-	"errors"
 	"fmt"
 	repo "hita/repository"
 	"hita/utils/api"
 	"strconv"
+	"time"
 )
 
-type RespUserProfile struct {
-	Id           int64  `json:"id"`
-	Username     string `json:"username"`
-	Nickname     string `json:"nickname"`
-	Gender       string `json:"gender"`
-	Avatar       int64  `json:"avatar"`
-	Signature    string `json:"signature"`
-	StudentId    string `json:"studentId"`
-	School       string `json:"school"`
-	Followed     bool   `json:"followed"`
-	FollowingNum int16  `json:"followingNum"`
-	FansNum      int16  `json:"fansNum"`
+type RespTopic struct {
+	Id          int64     `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Avatar      int64     `json:"avatar"`
+	ArticleNum  int       `json:"articleNum"`
+	CreateTime  time.Time `json:"createTime"`
 }
 
-type ProfileReq struct {
-	UserId string `form:"userId" json:"userId"`
-}
-
-func (p *ProfileReq) GetBasicProfile(userId int64) (data RespUserProfile, code int, err error) {
-	targetIdInt, e := strconv.ParseInt(p.UserId, 10, 64)
-	if e != nil {
-		return RespUserProfile{}, api.CodeWrongParam, e
-	}
-	var user = repo.User{Id: targetIdInt}
-	var followed = false
-	if targetIdInt != userId {
-		follow := repo.Follow{
-			UserId:      userId,
-			FollowingId: targetIdInt,
-		}
-		followed = follow.Exist()
-	}
-	if user.FindById() == nil {
-		data.Nickname = user.Nickname
-		data.Id = user.Id
-		data.Gender = user.Gender
-		data.Username = user.UserName
-		data.StudentId = user.StudentId
-		data.Avatar = user.Avatar
-		data.Signature = user.Signature
-		data.School = user.School
-		data.Followed = followed
-		data.FansNum = user.FansNum
-		data.FollowingNum = user.FollowingNum
-		code = api.CodeSuccess
-	} else {
-		err = errors.New("user does not exist")
-		code = api.CodeUserNotExist
-	}
-	return
-}
-
-type GetUserReq struct {
+type GetTopicsReq struct {
 	Mode     string `form:"mode" json:"mode"`
 	PageSize int    `form:"pageSize" json:"pageSize"`
 	PageNum  int    `form:"pageNum" json:"pageNum"`
 	Extra    string `form:"extra" json:"extra"`
 }
 
-func (req *GetUserReq) GetUser(userId int64) (result []RespUserProfile, code int, error error) {
-	var users []repo.User
+func (req *GetTopicsReq) GetTopics(userId int64) (result []RespTopic, code int, error error) {
+	var topics []repo.Topic
+	err := fmt.Errorf("")
 	switch req.Mode {
-	case "liked":
+	case "hot":
 		{
-			articleIdInt, err := strconv.ParseInt(req.Extra, 10, 64)
-			if err != nil {
-				return nil, api.CodeWrongParam, err
-			}
-			users, err = repo.GetLikedUsers(articleIdInt, req.PageSize, req.PageNum)
-			if err != nil {
-				return nil, api.CodeOtherError, err
-			}
-		}
-	case "fans":
-		{
-			userIdInt, err := strconv.ParseInt(req.Extra, 10, 64)
-			if err != nil {
-				return nil, api.CodeWrongParam, err
-			}
-			users, err = repo.GetFans(userIdInt, req.PageSize, req.PageNum)
-			if err != nil {
-				return nil, api.CodeOtherError, err
-			}
-		}
-	case "following":
-		{
-			userIdInt, err := strconv.ParseInt(req.Extra, 10, 64)
-			if err != nil {
-				return nil, api.CodeWrongParam, err
-			}
-			users, err = repo.GetFollowing(userIdInt, req.PageSize, req.PageNum)
+			topics, err = repo.GetHotTopics()
 			if err != nil {
 				return nil, api.CodeOtherError, err
 			}
 		}
 	case "search":
 		{
-			err := fmt.Errorf("")
-			users, err = repo.SearchUser(req.Extra, req.PageSize, req.PageNum)
+			topics, err = repo.SearchTopics(req.Extra, req.PageSize, req.PageNum)
 			if err != nil {
 				return nil, api.CodeOtherError, err
 			}
 		}
 	}
-	for _, user := range users {
-		var followed = false
-		if user.Id != userId {
-			follow := repo.Follow{
-				UserId:      userId,
-				FollowingId: user.Id,
-			}
-			followed = follow.Exist()
-		}
-		resp := RespUserProfile{
-			Nickname:     user.Nickname,
-			Id:           user.Id,
-			Gender:       user.Gender,
-			Username:     user.UserName,
-			StudentId:    user.StudentId,
-			Avatar:       user.Avatar,
-			Signature:    user.Signature,
-			School:       user.School,
-			Followed:     followed,
-			FollowingNum: user.FollowingNum,
-			FansNum:      user.FansNum,
+	for _, topic := range topics {
+		resp := RespTopic{
+			Id:          topic.Id,
+			ArticleNum:  topic.ArticleNum,
+			Name:        topic.Name,
+			Avatar:      topic.Avatar,
+			Description: topic.Description,
+			CreateTime:  topic.CreateTime,
 		}
 		result = append(result, resp)
+	}
+	code = api.CodeSuccess
+	return
+}
+
+type GetTopicReq struct {
+	TopicId string `form:"topicId" json:"topicId"`
+}
+
+func (req *GetTopicReq) GetTopic() (result RespTopic, code int, er error) {
+	topicIdInt, err := strconv.ParseInt(req.TopicId, 10, 64)
+	if err != nil {
+		return RespTopic{}, api.CodeWrongParam, err
+	}
+	topic := repo.Topic{
+		Id: topicIdInt,
+	}
+	er = topic.Get()
+	if er != nil {
+		code = api.CodeOtherError
+		return
+	}
+	result = RespTopic{
+		Id:          topic.Id,
+		ArticleNum:  topic.ArticleNum,
+		Name:        topic.Name,
+		Avatar:      topic.Avatar,
+		Description: topic.Description,
+		CreateTime:  topic.CreateTime,
 	}
 	code = api.CodeSuccess
 	return

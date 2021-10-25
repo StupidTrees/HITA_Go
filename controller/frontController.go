@@ -7,55 +7,52 @@ import (
 	"hita/utils/api"
 )
 
-func SignUp(c *gin.Context) {
-	var req service.ReqSignUp
+func CountUserNum(c *gin.Context) {
 	var result api.StdResp
-	err := c.ShouldBind(&req)
-	if err != nil {
-		result.Code = -1
-		result.Message = "request param error!:" + err.Error()
+	var err error
+	result.Data, result.Code, err = service.CountUsers()
+	if err == nil {
+		result.Code = api.CodeSuccess
+		result.Message = "success!"
 	} else {
-		if req.Gender != "MALE" && req.Gender != "FEMALE" && req.Gender != "OTHER" {
-			result.Code = api.CodeWrongParam
-			result.Message = "wrong param！"
-		} else {
-			result.Data, result.Code, err = req.SignUp()
-			if err != nil {
-				result.Message = err.Error()
-				result.Data = err
-			} else {
-				result.Code = api.CodeSuccess
-				result.Message = "success!"
-			}
-		}
+		result.Data = err
+		result.Message = "create failed"
 	}
+	//fmt.Println(result)
 	//响应给客户端
 	c.JSON(200, result)
 }
 
-func LogIn(c *gin.Context) {
-	var req service.ReqLogIn
+func GetLatestVersionName(c *gin.Context) {
+	var result api.StdResp
+	var err error
+	result.Data, result.Code, err = service.GetInfo("latest_version_name")
+	if err == nil {
+		result.Code = api.CodeSuccess
+		result.Message = "success!"
+	} else {
+		result.Data = err
+		result.Message = "fetch failed"
+	}
+	//fmt.Println(result)
+	//响应给客户端
+	c.JSON(200, result)
+}
+
+func MakeSuggestion(c *gin.Context) {
+	var req service.MakeSuggestionReq
 	var result api.StdResp
 	var err error
 	err = c.ShouldBind(&req)
-	if err != nil {
-		result.Code = api.CodeWrongParam
-		result.Message = "request param error!"
+	result.Code, err = req.CreateSuggestion()
+	if err == nil {
+		result.Code = api.CodeSuccess
+		result.Message = "success!"
 	} else {
-		if len(req.Username) == 0 {
-			result.Code = api.CodeWrongParam
-			result.Message = "username shouldn't be empty!"
-		} else {
-			result.Data, result.Code, err = req.LogIn()
-			if err == nil {
-				result.Code = api.CodeSuccess
-				result.Message = "success!"
-			} else {
-				result.Data = err
-				result.Message = "login failed"
-			}
-		}
+		result.Data = err
+		result.Message = "fetch failed"
 	}
+	//fmt.Println(result)
 	//响应给客户端
 	c.JSON(200, result)
 }

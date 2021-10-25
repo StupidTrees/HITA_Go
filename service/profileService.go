@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	repo "hita/repository"
 	"hita/utils/api"
 	"strconv"
@@ -16,8 +17,8 @@ type RespUserProfile struct {
 	Signature    string `json:"signature"`
 	StudentId    string `json:"studentId"`
 	School       string `json:"school"`
-	Followed     bool   `json:"followed" gorm:"not null; default:0"`
-	FollowingNum int16  `json:"followingNum" gorm:"not null; default:0"`
+	Followed     bool   `json:"followed"`
+	FollowingNum int16  `json:"followingNum"`
 	FansNum      int16  `json:"fansNum"`
 }
 
@@ -98,6 +99,14 @@ func (req *GetUserReq) GetUser(userId int64) (result []RespUserProfile, code int
 				return nil, api.CodeWrongParam, err
 			}
 			users, err = repo.GetFollowing(userIdInt, req.PageSize, req.PageNum)
+			if err != nil {
+				return nil, api.CodeOtherError, err
+			}
+		}
+	case "search":
+		{
+			err := fmt.Errorf("")
+			users, err = repo.SearchUser(req.Extra, req.PageSize, req.PageNum)
 			if err != nil {
 				return nil, api.CodeOtherError, err
 			}

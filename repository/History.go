@@ -10,7 +10,7 @@ type History struct {
 	Id     int64  `json:"id" gorm:"PRIMARY_KEY"`
 	Uid    string `json:"uid" gorm:"column:uid;not null"`
 	Table  string `json:"table" gorm:"column:table; not null"`
-	Action string `json:"action" gorm:"type:enum('REQUIRE','REMOVE');default:'ADD'"`
+	Action string `json:"action" gorm:"type:enum('REQUIRE','REMOVE');default:'REQUIRE'"`
 	Ids    string `json:"ids"`
 }
 

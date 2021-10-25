@@ -8,8 +8,8 @@ import (
 	"hita/utils/api"
 )
 
-func FollowOrUnFollow(c *gin.Context) {
-	var req service.FollowReq
+func StarOrUnStar(c *gin.Context) {
+	var req service.StarReq
 	var result api.StdResp
 	var err error
 	err = c.ShouldBind(&req)
@@ -18,7 +18,7 @@ func FollowOrUnFollow(c *gin.Context) {
 		result.Message = "request param error!"
 	} else {
 		id, err := api.GetHeaderUserId(c)
-		result.Data, result.Code, err = req.FollowOrUnFollow(id)
+		result.Data, result.Code, err = req.StarOrUnStar(id)
 		if err == nil {
 			result.Code = api.CodeSuccess
 			result.Message = "success!"

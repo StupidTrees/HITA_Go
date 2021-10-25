@@ -6,35 +6,35 @@ import (
 	"strconv"
 )
 
-type FollowReq struct {
-	FollowingId string `form:"followingId" json:"followingId"`
-	Follow      bool   `form:"follow" json:"follow"`
+type StarReq struct {
+	ArticleId string `form:"articleId" json:"articleId"`
+	Star      bool   `form:"star" json:"star"`
 }
 
-type FollowResp struct {
-	Follow bool `form:"follow" json:"follow"`
+type StarResp struct {
+	Starred bool `form:"starred" json:"starred"`
 }
 
-func (req *FollowReq) FollowOrUnFollow(userId int64) (data FollowResp, code int, error error) {
-	aId, err := strconv.ParseInt(req.FollowingId, 10, 64)
+func (req *StarReq) StarOrUnStar(userId int64) (data StarResp, code int, error error) {
+	aId, err := strconv.ParseInt(req.ArticleId, 10, 64)
 	if err != nil {
-		return FollowResp{}, api.CodeWrongParam, err
+		return StarResp{}, api.CodeWrongParam, err
 	}
-	follow := repository.Follow{
-		UserId:      userId,
-		FollowingId: aId,
+	Star := repository.Star{
+		UserId:    userId,
+		ArticleId: aId,
 	}
-	if req.Follow {
-		error = follow.Create()
+	if req.Star {
+		error = Star.Create()
 	} else {
-		error = follow.Delete()
+		error = Star.Delete()
 	}
 	if error != nil {
 		code = api.CodeOtherError
 	} else {
 		code = api.CodeSuccess
-		data = FollowResp{
-			Follow: req.Follow,
+		data = StarResp{
+			Starred: req.Star,
 		}
 	}
 	return

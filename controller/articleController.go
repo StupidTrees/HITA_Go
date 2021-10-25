@@ -45,6 +45,7 @@ func CreateArticleWithImages(c *gin.Context) {
 	if err == nil {
 		files := form.File["files"]
 		var imageIds []int64
+		var images []repository.Image
 		for _, file := range files {
 			filename := xid.New().String() + path.Ext(file.Filename)
 			fullPath := repository.GetArticleImagePath(filename)
@@ -62,6 +63,7 @@ func CreateArticleWithImages(c *gin.Context) {
 					result.Message = "创建图片对象出错"
 				} else {
 					imageIds = append(imageIds, img.Id)
+					images = append(images, img)
 				}
 			} else {
 				result.Code = -2
@@ -70,15 +72,24 @@ func CreateArticleWithImages(c *gin.Context) {
 			}
 		}
 		id, _ := api.GetHeaderUserId(c)
+
+		aa, _ := strconv.ParseBool(c.Query("asAttitude"))
+		an, _ := strconv.ParseBool(c.Query("anonymous"))
 		req := service.CreateArticleReq{
-			Content:  c.Query("content"),
-			RepostId: c.Query("repostId"),
+			Content:    c.Query("content"),
+			RepostId:   c.Query("repostId"),
+			TopicId:    c.Query("topicId"),
+			Anonymous:  an,
+			AsAttitude: aa,
 		}
 		_, err = req.CreateArticle(id, imageIds)
 		if err != nil {
 			result.Code = api.CodeOtherError
 			result.Data = gin.H{"error": err}
 			result.Message = "发表文章失败"
+			for _, img := range images {
+				_ = img.Delete()
+			}
 		} else {
 			result.Code = api.CodeSuccess
 			result.Message = "success!"
@@ -190,6 +201,31 @@ func LikeOrUnlike(c *gin.Context) {
 		}
 	}
 	//fmt.Println(result)
+	//响应给客户端
+	c.JSON(200, result)
+}
+
+func Vote(c *gin.Context) {
+	var req service.VoteReq
+	var result api.StdResp
+	var err error
+	err = c.ShouldBind(&req)
+	if err != nil {
+		result.Code = api.CodeWrongParam
+		result.Message = "request param error!"
+	} else {
+		id, err := api.GetHeaderUserId(c)
+		result.Data, result.Code, err = req.Vote(id)
+		if err == nil {
+			result.Code = api.CodeSuccess
+			result.Message = "success!"
+		} else {
+			result.Data = err
+			result.Message = "create failed"
+
+		}
+	}
+	fmt.Println(result)
 	//响应给客户端
 	c.JSON(200, result)
 }

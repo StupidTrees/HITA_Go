@@ -5,84 +5,134 @@ import (
 	repo "hita/repository"
 	"hita/utils/api"
 	"strconv"
+	"strings"
 	"time"
 )
 
-type RespTopic struct {
-	Id          int64     `json:"id"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	Avatar      int64     `json:"avatar"`
-	ArticleNum  int       `json:"articleNum"`
-	CreateTime  time.Time `json:"createTime"`
+type CountUnreadReq struct {
+	Mode string `form:"mode" json:"mode"`
 }
 
-type GetTopicsReq struct {
-	Mode     string `form:"mode" json:"mode"`
-	PageSize int    `form:"pageSize" json:"pageSize"`
-	PageNum  int    `form:"pageNum" json:"pageNum"`
-	Extra    string `form:"extra" json:"extra"`
-}
-
-func (req *GetTopicsReq) GetTopics(userId int64) (result []RespTopic, code int, error error) {
-	var topics []repo.Topic
-	err := fmt.Errorf("")
+func (req *CountUnreadReq) CountUnread(userId int64) (result int64, code int, er error) {
 	switch req.Mode {
-	case "hot":
+	case "like":
 		{
-			topics, err = repo.GetHotTopics()
-			if err != nil {
-				return nil, api.CodeOtherError, err
-			}
+			result, er = repo.CountUnread(userId, "LIKE")
 		}
-	case "search":
+	case "comment":
 		{
-			topics, err = repo.SearchTopics(req.Extra, req.PageSize, req.PageNum)
-			if err != nil {
-				return nil, api.CodeOtherError, err
-			}
+			result, er = repo.CountUnread(userId, "COMMENT")
+		}
+	case "repost":
+		{
+			result, er = repo.CountUnread(userId, "REPOST")
+		}
+	case "follow":
+		{
+			result, er = repo.CountUnread(userId, "FOLLOW")
+		}
+	case "all":
+		{
+			result, er = repo.CountAllUnread(userId)
 		}
 	}
-	for _, topic := range topics {
-		resp := RespTopic{
-			Id:          topic.Id,
-			ArticleNum:  topic.ArticleNum,
-			Name:        topic.Name,
-			Avatar:      topic.Avatar,
-			Description: topic.Description,
-			CreateTime:  topic.CreateTime,
-		}
-		result = append(result, resp)
+	if er != nil {
+		code = api.CodeOtherError
+		return
 	}
 	code = api.CodeSuccess
 	return
 }
 
-type GetTopicReq struct {
-	TopicId string `form:"topicId" json:"topicId"`
+type GetMessageReq struct {
+	Mode     string `form:"mode" json:"mode"`
+	PageSize int    `form:"pageSize" json:"pageSize"`
+	PageNum  int    `form:"pageNum" json:"pageNum"`
 }
 
-func (req *GetTopicReq) GetTopic() (result RespTopic, code int, er error) {
-	topicIdInt, err := strconv.ParseInt(req.TopicId, 10, 64)
-	if err != nil {
-		return RespTopic{}, api.CodeWrongParam, err
+type MessageResp struct {
+	Id            int64     `json:"id"`
+	UserId        int64     `json:"userId"`
+	UserName      string    `json:"userName"`
+	UserAvatar    int64     `json:"userAvatar"`
+	Action        string    `json:"action"`
+	ActionContent string    `json:"actionContent"`
+	Type          string    `json:"type"`
+	ReferenceId   string    `json:"referenceId"`
+	Content       string    `json:"content"`
+	Image         string    `json:"Image"`
+	CreateTime    time.Time `json:"createTime"`
+}
+
+func (req *GetMessageReq) GetMessages(userId int64) (result []MessageResp, code int, err error) {
+	var messages []repo.Message
+	switch req.Mode {
+	case "like", "comment", "repost", "follow":
+		{
+			messages, err = repo.GetMessages(userId, strings.ToUpper(req.Mode), req.PageSize, req.PageNum)
+		}
 	}
-	topic := repo.Topic{
-		Id: topicIdInt,
+	var ids []int64
+	for _, msg := range messages {
+		ids = append(ids, msg.Id)
+		host := repo.User{
+			Id: msg.OtherId,
+		}
+		err = host.FindById()
+		if err != nil {
+			continue
+		}
+		mr := MessageResp{
+			Id:            msg.Id,
+			UserId:        host.Id,
+			UserName:      host.Nickname,
+			UserAvatar:    host.Avatar,
+			Action:        msg.Action,
+			Type:          msg.Type,
+			ReferenceId:   msg.ReferenceId,
+			CreateTime:    msg.CreateTime,
+			ActionContent: msg.Content,
+		}
+		switch msg.Type {
+		case "COMMENT":
+			{
+				cmtIdInt, er := strconv.ParseInt(msg.ReferenceId, 10, 64)
+				if er != nil {
+					continue
+				}
+				cmt := repo.Comment{
+					Id: cmtIdInt,
+				}
+				er = cmt.Get()
+				if er != nil {
+					continue
+				}
+				mr.Content = cmt.Content
+			}
+		case "ARTICLE":
+			{
+				articleIdInt, er := strconv.ParseInt(msg.ReferenceId, 10, 64)
+				if er != nil {
+					continue
+				}
+				a := repo.Article{
+					Id: articleIdInt,
+				}
+				er = a.Get()
+				if er != nil {
+					continue
+				}
+				mr.Content = a.Content
+				if len(a.Images) > 0 {
+					mr.Image = fmt.Sprint(a.Images[0])
+				}
+			}
+		}
+		result = append(result, mr)
 	}
-	er = topic.Get()
-	if er != nil {
-		code = api.CodeOtherError
-		return
-	}
-	result = RespTopic{
-		Id:          topic.Id,
-		ArticleNum:  topic.ArticleNum,
-		Name:        topic.Name,
-		Avatar:      topic.Avatar,
-		Description: topic.Description,
-		CreateTime:  topic.CreateTime,
-	}
+	_ = repo.MarkAllRead(ids)
+
+
 	code = api.CodeSuccess
 	return
 }

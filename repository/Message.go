@@ -5,23 +5,41 @@ import (
 	"time"
 )
 
-type Star struct {
-	User       User      `gorm:"ForeignKey:UserId"`
-	UserId     int64     `json:"userId" gorm:"not null"`
-	Article    Article   `gorm:"ForeignKey:ArticleId"`
-	ArticleId  int64     `json:"articleId" gorm:"not null"`
-	CreateTime time.Time `gorm:"column:create_time;autoCreateTime:milli"`
+type Message struct {
+	Id          int64  `gorm:"PRIMARY_KEY;AUTO_INCREMENT"`
+	UserId      int64  `gorm:"not null"`
+	OtherId     int64  `gorm:"not null"`
+	Action      string `gorm:"type:enum('FOLLOW','UNFOLLOW','COMMENT','LIKE','REPOST');not null; default:'LIKE'"`
+	Type        string `gorm:"type:enum('COMMENT','ARTICLE','NONE'); default:'NONE'"`
+	Content     string
+	ReferenceId string
+	Read        bool      `gorm:"not null;default:0"`
+	CreateTime  time.Time `gorm:"autoCreateTime:milli"`
 }
 
-func (u *Star) Create() error {
-	return orm.DB.Create(u).Error
-}
-func (u *Star) Delete() error {
-	return orm.DB.Model(u).Delete(u, "user_id=? and article_id=?", u.UserId, u.ArticleId).Error
+func (Message) TableName() string {
+	return "message"
 }
 
-func (u *Star) Exist() bool {
-	var num int64
-	orm.DB.Model(u).Where("user_id = ? and  article_id = ?", u.UserId, u.ArticleId).Limit(1).Count(&num)
-	return num != 0
+func (m *Message) Create() error {
+	return orm.DB.Create(m).Error
+}
+
+func CountAllUnread(userId int64) (result int64, err error) {
+	err = orm.DB.Raw("select count(*) from message where user_id = ? and `read` = 0 ", userId).Scan(&result).Error
+	return
+}
+
+func CountUnread(userId int64, tp string) (result int64, err error) {
+	err = orm.DB.Raw("select count(*) from message where user_id = ? and `read`= 0 and action = ?", userId, tp).Scan(&result).Error
+	return
+}
+
+func MarkAllRead(ids []int64) error {
+	return orm.DB.Exec("update message set `read` = 1 where id in (?)", ids).Error
+}
+
+func GetMessages(userId int64, tp string, pageSize int, pageNum int) (result []Message, err error) {
+	err = orm.DB.Raw("select * from message where `action` = ? and user_id=? order by id desc limit ?,?", tp, userId, pageSize*(pageNum-1), pageSize).Scan(&result).Error
+	return
 }

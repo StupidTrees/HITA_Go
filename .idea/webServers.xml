@@ -3,14 +3,7 @@
   <component name="WebServers">
     <option name="servers">
       <webServer id="e37558b3-4b80-44bf-83d8-be242aa37cda" name="huawei">
-        <fileTransfer accessType="SFTP" host="47.103.202.97" port="22" sshConfigId="2a74bfd6-60d2-460b-80aa-0a83010d29fe" sshConfig="root@47.103.202.97:22 key" keyPair="true">
-          <advancedOptions>
-            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
-          </advancedOptions>
-        </fileTransfer>
-      </webServer>
-      <webServer id="31b239e4-ca5c-407a-95ed-3de948fc920f" name="aliyun">
-        <fileTransfer accessType="SFTP" host="47.103.202.97" port="22" sshConfigId="2a74bfd6-60d2-460b-80aa-0a83010d29fe" sshConfig="root@47.103.202.97:22 key" keyPair="true">
+        <fileTransfer accessType="SFTP" host="hita.store" port="22" sshConfigId="2a74bfd6-60d2-460b-80aa-0a83010d29fe" sshConfig="root@hita.store:22 password">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>

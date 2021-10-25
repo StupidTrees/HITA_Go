@@ -1,30 +1,42 @@
 package repository
 
 import (
+	"errors"
 	orm "hita/utils/mysql"
 	"time"
 )
 
-type UserLikeArticle struct {
+type Vote struct {
 	User       User      `gorm:"ForeignKey:UserId"`
 	UserId     int64     `json:"userId" gorm:"not null"`
 	Article    Article   `gorm:"ForeignKey:ArticleId"`
 	ArticleId  int64     `json:"articleId" gorm:"not null"`
+	Up         bool      `gorm:"not null;default:false"`
 	CreateTime time.Time `gorm:"column:create_time;autoCreateTime:milli"`
 }
 
-func (u *UserLikeArticle) Create() error {
+func (Vote) TableName() string {
+	return "vote"
+}
+
+func (u *Vote) Create() error {
 	return orm.DB.Create(u).Error
 }
-func (u *UserLikeArticle) Delete() error {
-	return orm.DB.Model(u).Delete(u, "user_id=? and article_id=?", u.UserId, u.ArticleId).Error
-}
-func (u *UserLikeArticle) GetLikeNum() (a Article, e error) {
-	e = orm.DB.Raw("select like_num from article where id = ?", u.ArticleId).Scan(&a).Error
+
+func (u *Vote) GetVoteNum() (a Article, e error) {
+	e = orm.DB.Raw("select up_num,down_num from article where id = ?", u.ArticleId).Scan(&a).Error
 	return
 }
-func (u *UserLikeArticle) Exist() bool {
-	var num int64
-	orm.DB.Model(u).Where("user_id=? and article_id=?", u.UserId, u.ArticleId).Limit(1).Count(&num)
-	return num != 0
+
+func (u *Vote) Find() (err error) {
+	var votes []Vote
+	err = orm.DB.Model(u).Raw("select * from vote where user_id=? and article_id=?", u.UserId, u.ArticleId).Scan(&votes).Error
+	if len(votes)>0{
+		*u = votes[0]
+		return nil
+	}else{
+		return errors.New("not voted")
+	}
 }
+
+

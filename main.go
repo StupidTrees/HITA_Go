@@ -43,6 +43,13 @@ func init() {
 		_ = mysql.DB.AutoMigrate(&repository.UserLikeComment{})
 		_ = mysql.DB.AutoMigrate(&repository.Follow{})
 		_ = mysql.DB.AutoMigrate(&repository.Image{})
+		_ = mysql.DB.AutoMigrate(&repository.Star{})
+		_ = mysql.DB.AutoMigrate(&repository.Topic{})
+		err = mysql.DB.AutoMigrate(&repository.Vote{})
+		_ = mysql.DB.AutoMigrate(&repository.Message{})
+		_ = mysql.DB.AutoMigrate(&repository.Info{})
+		_ = mysql.DB.AutoMigrate(&repository.Inbox{})
+		print(err)
 	}
 
 	logger.Println("init db success")
@@ -58,6 +65,13 @@ func main() {
 	router.Use(gin.Recovery())
 	router.Use(middleware.TlsHandler()) //https
 
+	frontRoutes := router.Group("/front")
+	{
+		frontRoutes.GET("user_num", controller.CountUserNum)
+		frontRoutes.GET("latest_version_name", controller.GetLatestVersionName)
+		frontRoutes.POST("suggestion",controller.MakeSuggestion)
+	}
+
 	userRoutes := router.Group("/user")
 	{
 		userRoutes.POST("/sign_up", controller.SignUp)
@@ -72,6 +86,10 @@ func main() {
 	}
 	router.Use(middleware.JWTAuthMiddleware)
 
+	managerRoutes := router.Group("/manager")
+	{
+		managerRoutes.GET("check_update",controller.CheckUpdate)
+	}
 	profileRoutes := router.Group("/profile")
 	{
 		profileRoutes.POST("upload_avatar", controller.UploadAvatar)
@@ -89,7 +107,14 @@ func main() {
 		articleRoutes.GET("gets", controller.GetArticles)
 		articleRoutes.GET("get", controller.GetArticle)
 		articleRoutes.POST("like", controller.LikeOrUnlike)
+		articleRoutes.POST("vote", controller.Vote)
+		articleRoutes.POST("star", controller.StarOrUnStar)
 		articleRoutes.POST("delete", controller.DeleteArticle)
+	}
+	topicRoutes := router.Group("/topic")
+	{
+		topicRoutes.GET("gets", controller.GetTopics)
+		topicRoutes.GET("get", controller.GetTopic)
 	}
 	commentRoutes := router.Group("/comment")
 	{
@@ -100,6 +125,13 @@ func main() {
 		commentRoutes.POST("like", controller.LikeOrUnlikeComment)
 		commentRoutes.POST("delete", controller.DeleteComment)
 	}
+
+	messageRoutes := router.Group("/message")
+	{
+		messageRoutes.GET("unread", controller.CountUnread)
+		messageRoutes.GET("gets", controller.GetMessages)
+	}
+
 	//路由在指定端口Run起来（异步）
 	go func() {
 		//err := router.Run(":" + config.PORT)
