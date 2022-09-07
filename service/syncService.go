@@ -5,12 +5,13 @@ import (
 	"fmt"
 	repo "hita/repository"
 	"hita/utils/api"
+	"strconv"
 	"time"
 )
 
 type SyncReq struct {
-	Uid      string `form:"uid" json:"uid"`
-	LatestId int64  `form:"latestId" json:"latestId"`
+	Uid      int64 `form:"uid" json:"uid"`
+	LatestId int64 `form:"latestId" json:"latestId"`
 }
 type RespSync struct {
 	Action   string `json:"action"`   //push:客户端上传，pull：客户端拉取
@@ -20,7 +21,7 @@ type RespSync struct {
 }
 
 type PushReq struct {
-	Uid     int64  `form:"uid" json:"uid"`
+	Uid     string `form:"uid" json:"uid"`
 	History string `form:"history" json:"history"`
 	Data    string `form:"data" json:"data"`
 }
@@ -36,41 +37,72 @@ func (req *SyncReq) Sync() (result RespSync, code int, error error) {
 		result.Action = "NONE"
 	} else {
 		println("pull required")
+		//客户端的版本小于服务器版本，那么完整地下载
 		result.Action = "PULL"
 		result.LatestId = latestIdServer
-		histories := repo.GetHistoriesAfter(req.Uid, req.LatestId)
-		//fmt.Print(histories)
+		repo.ClearHistories(req.Uid, latestIdServer)
+		var histories []repo.History
 		requiredIds := map[string]map[string]string{}
-		for _, h := range histories {
-			if requiredIds[h.Table] == nil {
-				requiredIds[h.Table] = map[string]string{}
+		tables := []string{"timetable", "event", "subject"}
+		for _, tb := range tables {
+			histories = append(histories, repo.History{Id: latestIdServer, Uid: strconv.FormatInt(req.Uid, 10), Table: tb, Action: "CLEAR", Ids: "[]"})
+			requiredIds[tb] = map[string]string{}
+			var ids []string = nil
+			switch tb {
+			case "timetable":
+				ids = repo.GetTimetableIds(req.Uid)
+				break
+			case "event":
+				ids = repo.GetEventIds(req.Uid)
+				break
+			case "subject":
+				ids = repo.GetSubjectIds(req.Uid)
+				break
 			}
-			if h.Action == "REQUIRE" {
-				for _, id := range h.GetIds() {
-					requiredIds[h.Table][id] = id
-				}
-			} else {
-				for _, id := range h.GetIds() {
-					delete(requiredIds[h.Table], id)
-				}
+			if ids == nil {
+				ids = []string{}
 			}
+			for _, id := range ids {
+				requiredIds[tb][id] = id
+			}
+			is, _ := json.Marshal(ids)
+			histories = append(histories, repo.History{Id: latestIdServer, Uid: strconv.FormatInt(req.Uid, 10), Table: tb, Action: "REQUIRE",
+				Ids: string(is)})
 		}
-
 		data := getDataForIds(req.Uid, requiredIds)
 		hj, _ := json.Marshal(histories)
 		dj, _ := json.Marshal(data)
 		result.History = string(hj)
 		result.Data = string(dj)
-		fmt.Printf("result:%v\n", result)
+		//fmt.Printf("result:%v\n", result)
 	}
 	code = api.CodeSuccess
 	return
 }
 
 func (req *PushReq) Push(uid int64, historyList []repo.History, dataMap map[string][]interface{}) (code int, error error) {
+	var lastHis repo.History
 	for _, history := range historyList {
+		lastHis = history
 		//fmt.Printf("history:%v,%v,%v\n", history.Id, history.Table, history.Action)
 		switch history.Action {
+		case "CLEAR":
+			{
+				switch history.Table {
+				case "timetable":
+					{
+						repo.ClearTimetables(uid)
+					}
+				case "event":
+					{
+						repo.ClearEvents(uid)
+					}
+				case "subject":
+					{
+						repo.ClearSubjects(uid)
+					}
+				}
+			}
 		case "REQUIRE":
 			{
 				switch history.Table {
@@ -148,7 +180,13 @@ func (req *PushReq) Push(uid int64, historyList []repo.History, dataMap map[stri
 			}
 		}
 	}
-	repo.SaveHistories(historyList)
+	fmt.Println("clear history:", uid)
+	//push后，服务器的数据是最完整的，清除历史记录
+	repo.ClearHistories(uid, lastHis.Id)
+	//只保留最后一个his
+	lastHis.Uid = strconv.FormatInt(uid, 10)
+	lastHis.Ids = "[]"
+	repo.SaveHistories([]repo.History{lastHis})
 	code = api.CodeSuccess
 	return
 }
@@ -166,7 +204,7 @@ func findDataForIds(history repo.History, dataMap map[string][]interface{}, keyN
 	return res
 }
 
-func getDataForIds(uid string, requireIds map[string]map[string]string) map[string][]interface{} {
+func getDataForIds(uid int64, requireIds map[string]map[string]string) map[string][]interface{} {
 	result := map[string][]interface{}{}
 	for key := range requireIds {
 		if result[key] == nil {

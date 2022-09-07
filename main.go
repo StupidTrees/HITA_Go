@@ -60,16 +60,22 @@ func init() {
 func main() {
 	//创建一个gin框架的指针
 	router := gin.New()
-
+	//加载html文件
+	router.LoadHTMLGlob("templates/*")
 	//设置中间件
 	router.Use(gin.Recovery())
 	router.Use(middleware.TlsHandler()) //https
-
+	staticRoutes := router.Group("/static")
+	{
+		staticRoutes.GET("about", controller.AboutPage)
+		staticRoutes.GET("privacy_policy", controller.PrivacyPolicyPage)
+		staticRoutes.GET("user_agreement", controller.UserAgreementPage)
+	}
 	frontRoutes := router.Group("/front")
 	{
 		frontRoutes.GET("user_num", controller.CountUserNum)
 		frontRoutes.GET("latest_version_name", controller.GetLatestVersionName)
-		frontRoutes.POST("suggestion",controller.MakeSuggestion)
+		frontRoutes.POST("suggestion", controller.MakeSuggestion)
 	}
 
 	userRoutes := router.Group("/user")
@@ -88,7 +94,7 @@ func main() {
 
 	managerRoutes := router.Group("/manager")
 	{
-		managerRoutes.GET("check_update",controller.CheckUpdate)
+		managerRoutes.GET("check_update", controller.CheckUpdate)
 	}
 	profileRoutes := router.Group("/profile")
 	{

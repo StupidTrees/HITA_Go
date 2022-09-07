@@ -9,9 +9,10 @@ import (
 )
 
 type Image struct {
-	Id       int64  `json:"id" gorm:"PRIMARY_KEY;AUTO_INCREMENT"`
-	Filename string `json:"filename"`
-	Type     string `json:"type" gorm:"type:enum('AVATAR','POST','OTHER');default:'OTHER';not null"`
+	Id        int64  `json:"id" gorm:"PRIMARY_KEY;AUTO_INCREMENT"`
+	Filename  string `json:"filename"`
+	Type      string `json:"type" gorm:"type:enum('AVATAR','POST','OTHER');default:'OTHER';not null"`
+	Sensitive bool   `gorm:"not null;default:0"`
 }
 
 func (Image) TableName() string {
@@ -31,6 +32,10 @@ func GetAvatarPath(filename string) string {
 }
 func GetArticleImagePath(filename string) string {
 	return path.Join(logger.GetCurrentPath(), "..") + "/" + config.ArticleImagePath + filename
+}
+
+func GetSensitivePlaceholderPath() string {
+	return path.Join(logger.GetCurrentPath(), "..") + "/" + config.SensitivePlaceholderPath
 }
 func (i *Image) Delete() error {
 	err := i.Find()
@@ -54,4 +59,7 @@ func (i *Image) Delete() error {
 }
 func (i *Image) Find() error {
 	return orm.DB.Where("id=?", i.Id).Find(i).Error
+}
+func (i *Image) Update() error {
+	return orm.DB.Model(i).Update("sensitive", i.Sensitive).Error
 }

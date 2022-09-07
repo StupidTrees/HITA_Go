@@ -32,12 +32,22 @@ func AddEvents(subjects []Event) {
 	}
 }
 
+func ClearEvents(uid int64) {
+	orm.DB.Exec("delete from event where user_id=?", uid)
+}
+
 func RemoveEventsInIds(ids []string) {
 	orm.DB.Where("id in (?)", ids).Delete(Event{})
 }
 
-func GetEventsInIds(uid string, ids []string) []Event {
+func GetEventsInIds(uid int64, ids []string) []Event {
 	var res []Event
 	orm.DB.Raw("select * from event where user_id =? and id in (?)", uid, ids).Scan(&res)
+	return res
+}
+
+func GetEventIds(uid int64) []string {
+	var res []string
+	orm.DB.Raw("select id from event where user_id =?", uid).Scan(&res)
 	return res
 }

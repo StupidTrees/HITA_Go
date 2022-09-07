@@ -33,12 +33,22 @@ func AddSubjects(subjects []TermSubject) {
 
 }
 
+func ClearSubjects(uid int64) {
+	orm.DB.Exec("delete from subject where user_id=?", uid)
+}
+
 func RemoveSubjectInIds(ids []string) {
 	orm.DB.Where("id in (?)", ids).Delete(TermSubject{})
 }
 
-func GetSubjectsInIds(uid string, ids []string) []TermSubject {
+func GetSubjectsInIds(uid int64, ids []string) []TermSubject {
 	var res []TermSubject
 	orm.DB.Raw("select * from subject where user_id =? and id in (?)", uid, ids).Scan(&res)
+	return res
+}
+
+func GetSubjectIds(uid int64) []string {
+	var res []string
+	orm.DB.Raw("select id from subject where user_id =?", uid).Scan(&res)
 	return res
 }

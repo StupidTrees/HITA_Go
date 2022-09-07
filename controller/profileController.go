@@ -4,12 +4,9 @@ import (
 	_ "errors"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/xid"
-	"hita/config"
 	"hita/repository"
 	"hita/service"
 	"hita/utils/api"
-	"hita/utils/logger"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -120,27 +117,15 @@ func ChangeGender(c *gin.Context) {
 func GetAvatar(c *gin.Context) {
 	result := api.StdResp{}
 	id, _ := strconv.ParseInt(c.Query("imageId"), 10, 64)
-	image := repository.Image{
-		Id: id,
-	}
-	err := image.Find()
+	data, err := service.GetImage(id)
+	c.Header("Content-Type", "image/jpeg")
+	c.Header("Content-Transfer-Encoding", "binary")
 	if err == nil {
-		fullPath := path.Join(logger.GetCurrentPath(), "..") + "/" + config.AvatarPath + image.Filename
-		c.Header("Content-Type", "image/jpeg")
-		c.Header("Content-Transfer-Encoding", "binary")
-		data, err := ioutil.ReadFile(fullPath)
-		if err == nil {
-			c.Data(http.StatusOK, "image/jpeg", data)
-		} else {
-			result.Data = gin.H{"error": err}
-			result.Message = "open file failed"
-			result.Code = api.CodeOtherError
-			c.JSON(http.StatusOK, result)
-		}
+		c.Data(http.StatusOK, "image/jpeg", data)
 	} else {
 		result.Data = gin.H{"error": err}
-		result.Message = "user not exist"
-		result.Code = api.CodeUserNotExist
+		result.Message = "open file failed or user not found"
+		result.Code = api.CodeOtherError
 		c.JSON(http.StatusOK, result)
 	}
 }

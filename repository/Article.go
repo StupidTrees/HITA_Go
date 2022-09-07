@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"encoding/json"
+	"fmt"
 	"hita/utils"
 	"hita/utils/logger"
 	orm "hita/utils/mysql"
@@ -79,50 +80,55 @@ func (a *Article) Delete() error {
 }
 
 func GetFollowingPosts(userId int64, beforeTime utils.Long, afterTime utils.Long, pageSize int) (res []Article, err error) {
-	beforeTs := beforeTime.ToTime().UTC()
-	afterTs := afterTime.ToTime().UTC()
-	err = orm.DB.Preload("Author").Preload("Topic").Preload("RepostFrom").Where("create_time < ? and  create_time>? and ( author_id = ? or author_id in (?) )", beforeTs, afterTs, userId,
+	beforeTs := beforeTime / 1000
+	afterTs := afterTime / 1000
+	err = orm.DB.Preload("Author").Preload("Topic").Preload("RepostFrom").Where("unix_timestamp(create_time) < ? and  unix_timestamp(create_time)>? and anonymous = false and ( author_id = ? or author_id = ? or author_id in (?) )", beforeTs, afterTs, userId, 1515,
 		orm.DB.Raw("select u.id from user as u where exists(select * from follows where user_id = ? and following_id = u.id)", userId)).Order("id DESC").Limit(pageSize).Find(&res).Error
-	filter(res)
+
+	res = filter(afterTime, beforeTime, res)
 	return
 }
 
-func  GetUsersPosts(userId int64, beforeTime utils.Long, afterTime utils.Long, pageSize int) (res []Article, err error) {
-	beforeTs := beforeTime.ToTime().UTC()
-	afterTs := afterTime.ToTime().UTC()
-	err = orm.DB.Preload("Author").Preload("Topic").Preload("RepostFrom").Where("create_time < ? and  create_time>? and ( author_id = ? )", beforeTs, afterTs, userId).Order("id DESC").Limit(pageSize).Find(&res).Error
-	filter(res)
+func GetUsersPosts(userId int64, beforeTime utils.Long, afterTime utils.Long, pageSize int) (res []Article, err error) {
+	beforeTs := beforeTime / 1000
+	afterTs := afterTime / 1000
+	err = orm.DB.Preload("Author").Preload("Topic").Preload("RepostFrom").Where("unix_timestamp(create_time) < ? and  unix_timestamp(create_time)>? and ( author_id = ? ) and anonymous = false", beforeTs, afterTs, userId).Order("id DESC").Limit(pageSize).Find(&res).Error
+	res = filter(afterTime, beforeTime, res)
 	return
 }
 
 func GetStarredPosts(userId int64, beforeTime utils.Long, afterTime utils.Long, pageSize int) (res []Article, err error) {
-	beforeTs := beforeTime.ToTime().UTC()
-	afterTs := afterTime.ToTime().UTC()
-	err = orm.DB.Preload("Author").Preload("Topic").Preload("RepostFrom").Where("create_time < ? and  create_time>? and id in (?)", beforeTs, afterTs,
+	beforeTs := beforeTime / 1000
+	afterTs := afterTime / 1000
+	err = orm.DB.Preload("Author").Preload("Topic").Preload("RepostFrom").Where("unix_timestamp(create_time) < ? and  unix_timestamp(create_time)>? and id in (?)", beforeTs, afterTs,
 		orm.DB.Raw("select article_id from stars where user_id = ?", userId)).Order("id DESC").Limit(pageSize).Find(&res).Error
-	filter(res)
+	res = filter(afterTime, beforeTime, res)
 	return
 }
 
 func GetTopicPosts(topicId int64, beforeTime utils.Long, afterTime utils.Long, pageSize int) (res []Article, err error) {
-	beforeTs := beforeTime.ToTime().UTC()
-	afterTs := afterTime.ToTime().UTC()
-	err = orm.DB.Preload("Author").Preload("Topic").Preload("RepostFrom").Where("create_time < ? and  create_time>? and topic_id =?", beforeTs, afterTs, topicId).Order("id DESC").Limit(pageSize).Find(&res).Error
-	filter(res)
+	beforeTs := beforeTime / 1000
+	afterTs := afterTime / 1000
+	err = orm.DB.Preload("Author").Preload("Topic").Preload("RepostFrom").Where("unix_timestamp(create_time) < ? and  unix_timestamp(create_time)>? and topic_id =?", beforeTs, afterTs, topicId).Order("id DESC").Limit(pageSize).Find(&res).Error
+	res = filter(afterTime, beforeTime, res)
 	return
 }
 
 func GetReposts(articleId int64, beforeTime utils.Long, afterTime utils.Long, pageSize int) (res []Article, err error) {
-	beforeTs := beforeTime.ToTime().UTC()
-	afterTs := afterTime.ToTime().UTC()
-	err = orm.DB.Preload("Author").Preload("Topic").Preload("RepostFrom").Where("create_time < ? and  create_time>? and ( repost_id = ? )", beforeTs, afterTs, articleId).Order("id DESC").Limit(pageSize).Find(&res).Error
-	filter(res)
+	beforeTs := beforeTime / 1000
+	afterTs := afterTime / 1000
+	err = orm.DB.Preload("Author").Preload("Topic").Preload("RepostFrom").Where("unix_timestamp(create_time) < ? and  unix_timestamp(create_time)>? and ( repost_id = ? )", beforeTs, afterTs, articleId).Order("id DESC").Limit(pageSize).Find(&res).Error
+	res = filter(afterTime, beforeTime, res)
 	return
 }
 
 func GetAllPosts(beforeTime utils.Long, afterTime utils.Long, pageSize int) (res []Article, err error) {
-	err = orm.DB.Preload("Author").Preload("Topic").Preload("RepostFrom").Where("create_time < ? and  create_time>? ", beforeTime.ToTime().UTC(), afterTime.ToTime().UTC()).Order("id DESC").Limit(pageSize).Find(&res).Error
-	filter(res)
+
+	q := orm.DB.Preload("Author").Preload("Topic").Preload("RepostFrom").Where("unix_timestamp(create_time) > ? and unix_timestamp(create_time) < ?", afterTime/1000, beforeTime/1000).Order("id DESC").Limit(pageSize)
+	fmt.Println(q.Statement.Selects)
+	err = q.Find(&res).Error
+	//fmt.Println(res[0].CreateTime.Unix() / 1000)
+	res = filter(afterTime, beforeTime, res)
 	return
 }
 
@@ -131,25 +137,33 @@ func SearchPosts(beforeTime utils.Long, afterTime utils.Long, pageSize int, extr
 		return []Article{}, nil
 	}
 	likeS := "%" + extra + "%"
-	err = orm.DB.Preload("Author").Preload("Topic").Preload("RepostFrom").Where("content like ? and create_time < ? and  create_time>? ", likeS, beforeTime.ToTime().UTC(), afterTime.ToTime().UTC()).Order("id DESC").Limit(pageSize).Find(&res).Error
-	filter(res)
+	err = orm.DB.Preload("Author").Preload("Topic").Preload("RepostFrom").Where("content like ? and unix_timestamp(create_time) < ? and  unix_timestamp(create_time)>? ", likeS, beforeTime/1000, afterTime/1000).Order("id DESC").Limit(pageSize).Find(&res).Error
+	res = filter(afterTime, beforeTime, res)
 	return
 }
 
-func filter(articles []Article) {
-	for index, a := range articles {
+func filter(afterTime utils.Long, beforeTime utils.Long, articles []Article) []Article {
+	var res []Article
+	for _, a := range articles {
 		a.eraseName()
-		articles[index] = a
+		//articles[index] = a
+		if a.CreateTime.Unix() > afterTime.ToTime().Unix() && a.CreateTime.Unix() < beforeTime.ToTime().Unix() {
+			//fmt.Println("create", a.CreateTime.Unix())
+			//fmt.Println("after", afterTime.ToTime().Unix())
+			res = append(res, a)
+		}
 	}
+	return res
 }
 
-var  AnonymousId int64= 0
+var AnonymousId int64 = 1
+
 func (a *Article) eraseName() {
 	if a.Anonymous {
 		a.Author = User{
 			Id:       AnonymousId,
-			Nickname: "匿名用户",
-			Avatar:   3,
+			Nickname: "匿名",
+			Avatar:   11,
 		}
 	}
 }

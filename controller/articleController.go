@@ -8,7 +8,6 @@ import (
 	"hita/repository"
 	"hita/service"
 	"hita/utils/api"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -56,6 +55,10 @@ func CreateArticleWithImages(c *gin.Context) {
 					Filename: filename,
 					Type:     "POST",
 				}
+				fmt.Println("检测敏感图...", repository.GetArticleImagePath(filename))
+				res, _ := service.CheckSensitive(repository.GetArticleImagePath(filename))
+				fmt.Println("检测结果：", res)
+				img.Sensitive = res
 				err = img.Create()
 				if err != nil {
 					result.Code = -2
@@ -155,27 +158,15 @@ func GetArticle(c *gin.Context) {
 func GetArticleImage(c *gin.Context) {
 	result := api.StdResp{}
 	id, _ := strconv.ParseInt(c.Query("imageId"), 10, 64)
-	image := repository.Image{
-		Id: id,
-	}
-	err := image.Find()
+	data, err := service.GetImage(id)
 	if err == nil {
-		fullPath := repository.GetArticleImagePath(image.Filename)
 		c.Header("Content-Type", "image/jpeg")
 		c.Header("Content-Transfer-Encoding", "binary")
-		data, err := ioutil.ReadFile(fullPath)
-		if err == nil {
-			c.Data(http.StatusOK, "image/jpeg", data)
-		} else {
-			result.Data = gin.H{"error": err}
-			result.Message = "open file failed"
-			result.Code = api.CodeOtherError
-			c.JSON(http.StatusOK, result)
-		}
+		c.Data(http.StatusOK, "image/jpeg", data)
 	} else {
 		result.Data = gin.H{"error": err}
-		result.Message = "user not exist"
-		result.Code = api.CodeUserNotExist
+		result.Message = "open file failed"
+		result.Code = api.CodeOtherError
 		c.JSON(http.StatusOK, result)
 	}
 }

@@ -3,11 +3,11 @@ package controller
 import (
 	"encoding/json"
 	_ "errors"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"hita/repository"
 	"hita/service"
 	"hita/utils/api"
+	"strconv"
 )
 
 func Sync(c *gin.Context) {
@@ -27,7 +27,7 @@ func Sync(c *gin.Context) {
 			result.Message = "success!"
 		}
 	}
-	fmt.Printf("%v\n", result.Data)
+	//fmt.Printf("%v\n", result.Data)
 	//响应给客户端
 	c.JSON(200, result)
 }
@@ -44,7 +44,8 @@ func Push(c *gin.Context) {
 		_ = json.Unmarshal([]byte(req.History), &historyList)
 		var dataMap map[string][]interface{}
 		_ = json.Unmarshal([]byte(req.Data), &dataMap)
-		result.Code, err = req.Push(req.Uid, historyList, dataMap)
+		uidI, _ := strconv.ParseInt(req.Uid, 10, 64)
+		result.Code, err = req.Push(uidI, historyList, dataMap)
 		if err != nil {
 			result.Message = err.Error()
 			result.Data = err

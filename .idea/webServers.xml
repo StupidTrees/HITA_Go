@@ -9,6 +9,13 @@
           </advancedOptions>
         </fileTransfer>
       </webServer>
+      <webServer id="187ffc9f-9b13-45af-8467-348686f49b8f" name="tencent">
+        <fileTransfer accessType="SFTP" host="43.139.2.224" port="22" sshConfigId="e53b68fd-130b-40b2-8cc6-ae1b939dade7" sshConfig="ubuntu@43.139.2.224:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
     </option>
   </component>
 </project>

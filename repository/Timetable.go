@@ -65,12 +65,22 @@ func AddTimetables(timetables []Timetable) {
 
 }
 
+func ClearTimetables(uid int64) {
+	orm.DB.Exec("delete from timetable where user_id=?", uid)
+}
+
 func RemoveTimetablesInIds(ids []string) {
 	orm.DB.Where("id in (?)", ids).Delete(Timetable{})
 }
 
-func GetTimetablesInIds(uid string, ids []string) []Timetable {
+func GetTimetablesInIds(uid int64, ids []string) []Timetable {
 	var res []Timetable
 	orm.DB.Raw("select * from timetable where user_id =? and id in (?)", uid, ids).Scan(&res)
+	return res
+}
+
+func GetTimetableIds(uid int64) []string {
+	var res []string
+	orm.DB.Raw("select id from timetable where user_id =?", uid).Scan(&res)
 	return res
 }

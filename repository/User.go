@@ -18,6 +18,7 @@ type User struct {
 	StudentId    string    `json:"student_id"`
 	School       string    `json:"school"`
 	Signature    string    `json:"signature"`
+	StuId        string    `json:"stuId" gorm:"column:stu_id"`
 	PublicKey    string    `gorm:"column:public_key;not null"`
 	PrivateKey   string    `gorm:"column:private_key;not null"`
 	FollowingNum int16     `json:"followingNum" gorm:"following_num"`
@@ -80,33 +81,32 @@ func (user *User) ChangeUserProfile(attr string, value string) error {
 }
 
 func GetLikedUsers(articleId int64, pageSize int, pageNum int) (result []User, err error) {
-	err = orm.DB.Raw("select * from user where id in (?) limit ?,?", orm.DB.Raw("select user_id from user_like_articles where article_id = ? ", articleId),pageSize * (pageNum - 1),pageSize).Scan(&result).Error
+	err = orm.DB.Raw("select * from user where id in (?) limit ?,?", orm.DB.Raw("select user_id from user_like_articles where article_id = ? ", articleId), pageSize*(pageNum-1), pageSize).Scan(&result).Error
 	return
 }
 
 func GetFans(userId int64, pageSize int, pageNum int) (result []User, err error) {
-	err = orm.DB.Raw("select * from user where id in (?) limit ?,?", orm.DB.Raw("select user_id from follows where following_id = ? ", userId),pageSize * (pageNum - 1),pageSize).Scan(&result).Error
+	err = orm.DB.Raw("select * from user where id in (?) limit ?,?", orm.DB.Raw("select user_id from follows where following_id = ? ", userId), pageSize*(pageNum-1), pageSize).Scan(&result).Error
 	return
 }
 
 func GetFollowing(userId int64, pageSize int, pageNum int) (result []User, err error) {
-	err = orm.DB.Raw("select * from user where id in (?)  limit ?,?", orm.DB.Raw("select following_id from follows where user_id = ?", userId),pageSize * (pageNum - 1),pageSize).Scan(&result).Error
+	err = orm.DB.Raw("select * from user where id in (?)  limit ?,?", orm.DB.Raw("select following_id from follows where user_id = ?", userId), pageSize*(pageNum-1), pageSize).Scan(&result).Error
 	return
 }
 
 func SearchUser(key string, pageSize int, pageNum int) (result []User, err error) {
 	//println("size:%d,num:%d",pageSize,pageNum)
 	query := "%" + key + "%"
-	err = orm.DB.Raw("select * from user where username like ? or nickname like? limit ?,?", query, query,pageSize * (pageNum - 1),pageSize).Scan(&result).Error
+	err = orm.DB.Raw("select * from user where username like ? or nickname like? limit ?,?", query, query, pageSize*(pageNum-1), pageSize).Scan(&result).Error
 	return
 }
 
-
-func CountUserNum()(result int64, err error){
+func CountUserNum() (result int64, err error) {
 	err = orm.DB.Raw("select count(*) from user").Scan(&result).Error
 	return
 }
 
-func (user* User)DailyUpdate()(err error){
-	return orm.DB.Model(user).Update("update_time", time.Time{}.Unix()).Error
+func (user *User) DailyUpdate(appVersion int64, stuId string) (err error) {
+	return orm.DB.Model(user).Update("id", user.Id).Update("app_version", appVersion).Update("stu_id", stuId).Error
 }

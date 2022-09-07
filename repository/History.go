@@ -10,7 +10,7 @@ type History struct {
 	Id     int64  `json:"id" gorm:"PRIMARY_KEY"`
 	Uid    string `json:"uid" gorm:"column:uid;not null"`
 	Table  string `json:"table" gorm:"column:table; not null"`
-	Action string `json:"action" gorm:"type:enum('REQUIRE','REMOVE');default:'REQUIRE'"`
+	Action string `json:"action" gorm:"type:enum('REQUIRE','REMOVE','CLEAR');default:'REQUIRE'"`
 	Ids    string `json:"ids"`
 }
 
@@ -29,7 +29,7 @@ func (h *History) SetIds(list []string) {
 	h.Ids = string(str)
 }
 
-func GetLatestId(uid string) (id int64, err error) {
+func GetLatestId(uid int64) (id int64, err error) {
 	history := History{}
 	orm.DB.Raw("select id from history where uid = ? order by id desc limit 1", uid).Scan(&history)
 	id = history.Id
@@ -44,6 +44,9 @@ func SaveHistories(hList []History) {
 	}
 }
 
+func ClearHistories(uid int64, reserve int64) {
+	orm.DB.Exec("delete from history where uid = ? and id <> ?", uid, reserve)
+}
 func GetHistoriesAfter(uid string, latestId int64) []History {
 	var result []History
 	orm.DB.Raw("select * from history where uid = ? and id > ? order by id desc", uid, latestId).Scan(&result)

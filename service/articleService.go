@@ -37,7 +37,7 @@ func (req *CreateArticleReq) CreateArticle(userId int64, imageIds []int64) (code
 		}
 		err = repost.Get()
 		if err == nil {
-			if repost.AuthorId != userId{
+			if repost.AuthorId != userId {
 				msg := repository.Message{
 					UserId:      repost.AuthorId,
 					Content:     article.Content,
@@ -135,11 +135,11 @@ func (req *GetFollowingArticleReq) GetFollowingArticle(userId int64) (result []A
 			}
 			var tmpArticles []repository.Article
 			tmpArticles, error = repository.GetUsersPosts(userIdInt, req.BeforeTime, req.AfterTime, req.PageSize)
-			if userId==userIdInt{//看的不是自己的，把匿名隐藏
+			if userId == userIdInt { //看的不是自己的，把匿名隐藏
 				articles = tmpArticles
-			}else{
-				for _,a := range tmpArticles {
-					if !a.Anonymous{
+			} else {
+				for _, a := range tmpArticles {
+					if !a.Anonymous {
 						articles = append(articles, a)
 					}
 				}

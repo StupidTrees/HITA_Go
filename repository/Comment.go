@@ -37,6 +37,7 @@ func (c *Comment) Delete() error {
 		if c.ReplyId > 0 {
 			orm.DB.Exec("update comment set comment_num = comment_num-1 where id = ? or id=?", c.ReplyId, c.ContextId)
 		}
+		orm.DB.Exec("delete from comment where reply_id = ?", c.Id)
 		return orm.DB.Where("id=?", c.Id).Delete(c).Error
 	} else {
 		return err
