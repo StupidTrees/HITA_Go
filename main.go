@@ -77,7 +77,6 @@ func main() {
 		frontRoutes.GET("latest_version_name", controller.GetLatestVersionName)
 		frontRoutes.POST("suggestion", controller.MakeSuggestion)
 	}
-
 	userRoutes := router.Group("/user")
 	{
 		userRoutes.POST("/sign_up", controller.SignUp)
@@ -85,16 +84,15 @@ func main() {
 	}
 	router.GET("/profile/avatar", controller.GetAvatar)
 	router.GET("/article/image", controller.GetArticleImage)
+	router.Use(middleware.JWTAuthMiddleware)
+	managerRoutes := router.Group("/manager")
+	{
+		managerRoutes.GET("check_update", controller.CheckUpdate)
+	}
 	syncRoutes := router.Group("/sync")
 	{
 		syncRoutes.POST("/sync", controller.Sync)
 		syncRoutes.POST("/push", controller.Push)
-	}
-	router.Use(middleware.JWTAuthMiddleware)
-
-	managerRoutes := router.Group("/manager")
-	{
-		managerRoutes.GET("check_update", controller.CheckUpdate)
 	}
 	profileRoutes := router.Group("/profile")
 	{
